@@ -124,8 +124,8 @@ def main() -> None:
         diversity_penalty=data_training_args.diversity_penalty,
         gradient_checkpointing=training_args.gradient_checkpointing,
         use_cache=not training_args.gradient_checkpointing,
+        local_files_only=True,
     )
-
     # Initialize tokenizer
     tokenizer = AutoTokenizer.from_pretrained(
         model_args.tokenizer_name if model_args.tokenizer_name else model_args.model_name_or_path,
@@ -133,12 +133,13 @@ def main() -> None:
         use_fast=model_args.use_fast_tokenizer,
         revision=model_args.model_revision,
         use_auth_token=True if model_args.use_auth_token else None,
+        local_files_only=True,
     )
     assert isinstance(tokenizer, PreTrainedTokenizerFast), "Only fast tokenizers are currently supported"
     if isinstance(tokenizer, T5TokenizerFast):
         # In T5 `<` is OOV, see https://github.com/google-research/language/blob/master/language/nqg/tasks/spider/restore_oov.py
         tokenizer.add_tokens([AddedToken(" <="), AddedToken(" <")])
-
+    print(data_args, model_args, data_training_args, training_args)
     # Load dataset
     metric, dataset_splits = load_dataset(
         data_args=data_args,
@@ -166,7 +167,9 @@ def main() -> None:
             cache_dir=model_args.cache_dir,
             revision=model_args.model_revision,
             use_auth_token=True if model_args.use_auth_token else None,
+            local_files_only=True,
         )
+
         if isinstance(model, T5ForConditionalGeneration):
             model.resize_token_embeddings(len(tokenizer))
 

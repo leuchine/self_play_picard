@@ -110,13 +110,34 @@ train: pull-train-image
 	docker run \
 		-it \
 		--rm \
+		--gpus \"device=0\" \
 		--user 13011:13011 \
 		--mount type=bind,source=$(BASE_DIR)/train,target=/train \
 		--mount type=bind,source=$(BASE_DIR)/transformers_cache,target=/transformers_cache \
 		--mount type=bind,source=$(BASE_DIR)/configs,target=/app/configs \
 		--mount type=bind,source=$(BASE_DIR)/wandb,target=/app/wandb \
+		--mount type=bind,source=$(BASE_DIR)/seq2seq,target=/app/seq2seq \
 		tscholak/$(TRAIN_IMAGE_NAME):$(GIT_HEAD_REF) \
 		/bin/bash -c "python seq2seq/run_seq2seq.py configs/train.json"
+
+
+.PHONY: bash
+bash: pull-train-image
+	mkdir -p -m 777 transformers_cache
+	mkdir -p -m 777 wandb
+	mkdir -p -m 777 train
+	docker run \
+		-it \
+		--rm \
+		--user 13011:13011 \
+		--mount type=bind,source=$(BASE_DIR)/train,target=/train \
+		--mount type=bind,source=$(BASE_DIR)/transformers_cache,target=/transformers_cache \
+		--mount type=bind,source=$(BASE_DIR)/configs,target=/app/configs \
+		--mount type=bind,source=$(BASE_DIR)/wandb,target=/app/wandb \
+		--mount type=bind,source=$(BASE_DIR)/seq2seq,target=/app/seq2seq \
+		tscholak/$(TRAIN_IMAGE_NAME):$(GIT_HEAD_REF) \
+		/bin/bash
+
 
 .PHONY: train_cosql
 train_cosql: pull-train-image
@@ -131,6 +152,7 @@ train_cosql: pull-train-image
 		--mount type=bind,source=$(BASE_DIR)/transformers_cache,target=/transformers_cache \
 		--mount type=bind,source=$(BASE_DIR)/configs,target=/app/configs \
 		--mount type=bind,source=$(BASE_DIR)/wandb,target=/app/wandb \
+		--mount type=bind,source=$(BASE_DIR)/seq2seq,target=/app/seq2seq \
 		tscholak/$(TRAIN_IMAGE_NAME):$(GIT_HEAD_REF) \
 		/bin/bash -c "python seq2seq/run_seq2seq.py configs/train_cosql.json"
 
