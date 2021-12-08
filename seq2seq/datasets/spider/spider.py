@@ -136,6 +136,7 @@ class Spider(datasets.GeneratorBasedBuilder):
                     yield idx, {
                         "query": sample["query"],
                         "question": sample["question"],
+                        "turn_idx": 0,
                         "db_id": db_id,
                         "db_path": db_path,
                         "db_table_names": schema["table_names_original"],

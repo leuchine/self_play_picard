@@ -1,4 +1,4 @@
-GIT_HEAD_REF := $(shell git rev-parse HEAD)
+GIT_HEAD_REF := e37020b6eee18bff865d9d2ba852bd636f3ed777
 
 BASE_IMAGE := pytorch/pytorch:1.9.0-cuda11.1-cudnn8-devel
 
@@ -110,7 +110,7 @@ train: pull-train-image
 	docker run \
 		-it \
 		--rm \
-		--gpus \"device=0\" \
+		--runtime=nvidia \
 		--user 13011:13011 \
 		--mount type=bind,source=$(BASE_DIR)/train,target=/train \
 		--mount type=bind,source=$(BASE_DIR)/transformers_cache,target=/transformers_cache \
@@ -118,7 +118,7 @@ train: pull-train-image
 		--mount type=bind,source=$(BASE_DIR)/wandb,target=/app/wandb \
 		--mount type=bind,source=$(BASE_DIR)/seq2seq,target=/app/seq2seq \
 		tscholak/$(TRAIN_IMAGE_NAME):$(GIT_HEAD_REF) \
-		/bin/bash -c "python seq2seq/run_seq2seq.py configs/train.json"
+		/bin/bash -c "python seq2seq/run_train_text2sql.py configs/train.json"
 
 
 .PHONY: bash
@@ -147,6 +147,8 @@ train_cosql: pull-train-image
 	docker run \
 		-it \
 		--rm \
+		--runtime=nvidia \
+		-e NVIDIA_VISIBLE_DEVICES=3 \
 		--user 13011:13011 \
 		--mount type=bind,source=$(BASE_DIR)/train,target=/train \
 		--mount type=bind,source=$(BASE_DIR)/transformers_cache,target=/transformers_cache \
@@ -154,7 +156,26 @@ train_cosql: pull-train-image
 		--mount type=bind,source=$(BASE_DIR)/wandb,target=/app/wandb \
 		--mount type=bind,source=$(BASE_DIR)/seq2seq,target=/app/seq2seq \
 		tscholak/$(TRAIN_IMAGE_NAME):$(GIT_HEAD_REF) \
-		/bin/bash -c "python seq2seq/run_seq2seq.py configs/train_cosql.json"
+		/bin/bash -c "python seq2seq/run_train_text2sql.py configs/train_cosql.json"
+
+.PHONY: train_sql2text_cosql
+train_sql2text_cosql: pull-train-image
+	mkdir -p -m 777 train_sql2text
+	mkdir -p -m 777 transformers_cache
+	mkdir -p -m 777 wandb
+	docker run \
+		-it \
+		--rm \
+		--runtime=nvidia \
+		-e NVIDIA_VISIBLE_DEVICES=3 \
+		--user 13011:13011 \
+		--mount type=bind,source=$(BASE_DIR)/train_sql2text,target=/train_sql2text \
+		--mount type=bind,source=$(BASE_DIR)/transformers_cache,target=/transformers_cache \
+		--mount type=bind,source=$(BASE_DIR)/configs,target=/app/configs \
+		--mount type=bind,source=$(BASE_DIR)/wandb,target=/app/wandb \
+		--mount type=bind,source=$(BASE_DIR)/seq2seq,target=/app/seq2seq \
+		tscholak/$(TRAIN_IMAGE_NAME):$(GIT_HEAD_REF) \
+		/bin/bash -c "python seq2seq/run_train_sql2text.py configs/train_sql2text_cosql.json"
 
 .PHONY: eval
 eval: pull-eval-image
@@ -170,7 +191,7 @@ eval: pull-eval-image
 		--mount type=bind,source=$(BASE_DIR)/configs,target=/app/configs \
 		--mount type=bind,source=$(BASE_DIR)/wandb,target=/app/wandb \
 		tscholak/$(EVAL_IMAGE_NAME):$(GIT_HEAD_REF) \
-		/bin/bash -c "python seq2seq/run_seq2seq.py configs/eval.json"
+		/bin/bash -c "python seq2seq/run_train_text2sql.py configs/eval.json"
 
 .PHONY: eval_cosql
 eval_cosql: pull-eval-image
@@ -186,7 +207,7 @@ eval_cosql: pull-eval-image
 		--mount type=bind,source=$(BASE_DIR)/configs,target=/app/configs \
 		--mount type=bind,source=$(BASE_DIR)/wandb,target=/app/wandb \
 		tscholak/$(EVAL_IMAGE_NAME):$(GIT_HEAD_REF) \
-		/bin/bash -c "python seq2seq/run_seq2seq.py configs/eval_cosql.json"
+		/bin/bash -c "python seq2seq/run_train_text2sql.py configs/eval_cosql.json"
 
 .PHONY: serve
 serve: pull-eval-image

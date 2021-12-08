@@ -1,5 +1,13 @@
 from typing import Optional
 from dataclasses import dataclass, field
+from seq2seq.utils.dataset import DataTrainingArguments, DataArguments
+from seq2seq.utils.picard_model_wrapper import PicardArguments
+from transformers.hf_argparser import HfArgumentParser
+from transformers.training_args_seq2seq import Seq2SeqTrainingArguments
+from pathlib import Path
+import json
+import sys
+import os
 
 @dataclass
 class ModelArguments:
@@ -37,3 +45,27 @@ class ModelArguments:
             "with private models)."
         },
     )
+
+def parse_args():
+    # See all possible arguments by passing the --help flag to this script.
+    parser = HfArgumentParser(
+        (PicardArguments, ModelArguments, DataArguments, DataTrainingArguments, Seq2SeqTrainingArguments)
+    )
+    picard_args: PicardArguments
+    model_args: ModelArguments
+    data_args: DataArguments
+    data_training_args: DataTrainingArguments
+    training_args: Seq2SeqTrainingArguments
+    if len(sys.argv) == 2 and sys.argv[1].endswith(".json"):
+        # If we pass only one argument to the script and it's the path to a json file,
+        # let's parse it to get our arguments.
+        picard_args, model_args, data_args, data_training_args, training_args = parser.parse_json_file(
+            json_file=os.path.abspath(sys.argv[1])
+        )
+    elif len(sys.argv) == 3 and sys.argv[1].startswith("--local_rank") and sys.argv[2].endswith(".json"):
+        data = json.loads(Path(os.path.abspath(sys.argv[2])).read_text())
+        data.update({"local_rank": int(sys.argv[1].split("=")[1])})
+        picard_args, model_args, data_args, data_training_args, training_args = parser.parse_dict(args=data)
+    else:
+        picard_args, model_args, data_args, data_training_args, training_args = parser.parse_args_into_dataclasses()
+    return picard_args, model_args, data_args, data_training_args, training_args
