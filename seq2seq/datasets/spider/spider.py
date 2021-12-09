@@ -63,9 +63,11 @@ class Spider(datasets.GeneratorBasedBuilder):
     def _info(self) -> datasets.DatasetInfo:
         features = datasets.Features(
             {
+                "goal": datasets.Value("string"),
                 "query": datasets.Value("string"),
                 "question": datasets.Value("string"),
                 "db_id": datasets.Value("string"),
+                "turn_idx": datasets.Value("int32"),
                 "db_path": datasets.Value("string"),
                 "db_table_names": datasets.features.Sequence(datasets.Value("string")),
                 "db_column_names": datasets.features.Sequence(
@@ -134,6 +136,7 @@ class Spider(datasets.GeneratorBasedBuilder):
                         )
                     schema = self.schema_cache[db_id]
                     yield idx, {
+                        "goal": sample["query"],
                         "query": sample["query"],
                         "question": sample["question"],
                         "turn_idx": 0,

@@ -92,6 +92,7 @@ class CoSQL(datasets.GeneratorBasedBuilder):
     def _info(self):
         features = datasets.Features(
             {
+                "goal": datasets.Value("string"),
                 "query": datasets.Value("string"),
                 "utterances": datasets.features.Sequence(datasets.Value("string")),
                 "turn_idx": datasets.Value("int32"),
@@ -175,8 +176,9 @@ class CoSQL(datasets.GeneratorBasedBuilder):
                 }
 
                 yield idx, {
+                    "goal": sample["final"]["query"],
                     "utterances": [sample["final"]["utterance"]],
-                    "question": sample["final"]["utterance"],
+                    "question": sample["final"]["utterance"].replace("|", "/"),
                     "query": sample["final"]["query"],
                     "turn_idx": -1,
                     **db_info,
@@ -186,8 +188,9 @@ class CoSQL(datasets.GeneratorBasedBuilder):
                 for turn_idx, turn in enumerate(sample["interaction"]):
                     utterances.extend((utterance.strip() for utterance in turn["utterance"].split(sep="|")))
                     yield idx, {
+                        "goal": sample["final"]["query"],
                         "utterances": list(utterances),
-                        "question": turn["utterance"],
+                        "question": turn["utterance"].replace("|", "/"),
                         "query": turn["query"],
                         "turn_idx": turn_idx,
                         **db_info,
