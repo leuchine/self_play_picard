@@ -27,10 +27,10 @@ from seq2seq.utils.args import parse_args
 from seq2seq.utils.dataset_loader import load_dataset
 from seq2seq.utils.spider import SpiderTrainer
 from seq2seq.utils.cosql import CoSQLTrainer
-
+import torch
 
 def main() -> None:
-    picard_args, model_args, data_args, data_training_args, training_args = parse_args()
+    picard_args, model_args, data_args, data_training_args, training_args, _ = parse_args()
     # If model_name_or_path includes ??? instead of the number of steps, 
     # we load the latest checkpoint.
     if 'checkpoint-???' in model_args.model_name_or_path:
@@ -69,10 +69,7 @@ def main() -> None:
     if os.path.isdir(training_args.output_dir) and training_args.do_train and not training_args.overwrite_output_dir:
         last_checkpoint = get_last_checkpoint(training_args.output_dir)
         if last_checkpoint is None and len(os.listdir(training_args.output_dir)) > 0:
-            raise ValueError(
-                f"Output directory ({training_args.output_dir}) already exists and is not empty. "
-                "Use --overwrite_output_dir to overcome."
-            )
+            pass
         elif last_checkpoint is not None and training_args.resume_from_checkpoint is None:
             logger.info(
                 f"Checkpoint detected, resuming training at {last_checkpoint}. To avoid this behavior, change "
@@ -145,7 +142,6 @@ def main() -> None:
             use_auth_token=True if model_args.use_auth_token else None,
             local_files_only=False,
         )
-
         if isinstance(model, T5ForConditionalGeneration):
             model.resize_token_embeddings(len(tokenizer))
 
