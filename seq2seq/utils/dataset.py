@@ -127,12 +127,13 @@ class DataTrainingArguments:
 @dataclass
 class DataArguments:
     dataset: str = field(
-        metadata={"help": "The dataset to be used. Choose between ``spider``, ``cosql``, or ``cosql+spider``."},
+        metadata={"help": "The dataset to be used. Choose between ``spider``, ``cosql``, or ``cosql+spider``, or ``sparc``."},
     )
     dataset_paths: Dict[str, str] = field(
         default_factory=lambda: {
             "spider": "./seq2seq/datasets/spider",
             "cosql": "./seq2seq/datasets/cosql",
+            "sparc": "./seq2seq/datasets/sparc"
         },
         metadata={"help": "Paths of the dataset modules."},
     )
@@ -144,6 +145,7 @@ class DataArguments:
         default_factory=lambda: {
             "spider": "./seq2seq/metrics/spider",
             "cosql": "./seq2seq/metrics/cosql",
+            "sparc": "./seq2seq/metrics/sparc"
         },
         metadata={"help": "Paths of the metric modules."},
     )

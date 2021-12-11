@@ -18,6 +18,9 @@ from seq2seq.utils.dataset import (
 )
 from seq2seq.utils.spider import spider_add_serialized_schema, spider_pre_process_function
 from seq2seq.utils.cosql import cosql_add_serialized_schema, cosql_pre_process_function
+# TODO: 
+#from seq2seq.utils.sparc import sparc_add_serialized_schema, sparc_pre_process_function
+
 
 logger = logging.getLogger(__name__)
 
@@ -65,10 +68,14 @@ def load_dataset(
     _cosql_metric: Callable[[], Metric] = lambda: datasets.load.load_metric(
         path=data_args.metric_paths["cosql"], config_name=data_args.metric_config, test_suite_db_dir=data_args.test_suite_db_dir
     )
+
+    
     _cosql_add_serialized_schema = lambda ex: cosql_add_serialized_schema(
         ex=ex,
         data_training_args=data_training_args,
     )
+
+    
     _cosql_pre_process_function = lambda batch, max_source_length, max_target_length: cosql_pre_process_function(
         batch=batch,
         max_source_length=max_source_length,
@@ -76,6 +83,31 @@ def load_dataset(
         data_training_args=data_training_args,
         tokenizer=tokenizer,
     )
+
+    # Add sparc
+    _sparc_dataset_dict: Callable[[], DatasetDict] = lambda: datasets.load.load_dataset(
+        path=data_args.dataset_paths["sparc"], cache_dir=model_args.cache_dir
+    )
+
+    # _sparc_metric: Callable[[], Metric] = lambda: datasets.load.load_metric(
+    #     path=data_args.metric_paths["sparc"], config_name=data_args.metric_config, test_suite_db_dir=data_args.test_suite_db_dir
+    # )
+
+    # TODO: implement sparc_add_serialized_schema
+    _sparc_add_serialized_schema = lambda ex: sparc_add_serialized_schema(
+        ex=ex,
+        data_training_args=data_training_args,
+    )
+
+    # TODO: implement sparc_pre_process_function 
+    _sparc_pre_process_function = lambda batch, max_source_length, max_target_length: sparc_pre_process_function(
+        batch=batch,
+        max_source_length=max_source_length,
+        max_target_length=max_target_length,
+        data_training_args=data_training_args,
+        tokenizer=tokenizer,
+    )
+
 
     _prepare_splits_kwargs = {
         "data_args": data_args,
@@ -141,6 +173,16 @@ def load_dataset(
             test_splits=cosql_dataset_splits.test_splits,
             schemas=schemas,
         )
+
+    elif data_args.dataset == "sparc":
+        # metric = _sparc_metric()
+        dataset_splits = prepare_splits(
+            dataset_dict=_sparc_dataset_dict(),
+            add_serialized_schema=_sparc_add_serialized_schema,
+            pre_process_function=_sparc_pre_process_function,
+            **_prepare_splits_kwargs,
+        )
+    
     else:
         raise NotImplementedError()
 
