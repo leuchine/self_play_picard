@@ -111,7 +111,7 @@ train: pull-train-image
 		-it \
 		--rm \
 		--runtime=nvidia \
-		-e NVIDIA_VISIBLE_DEVICES=2,3 \
+		-e NVIDIA_VISIBLE_DEVICES=4,5 \
 		--user 13011:13011 \
 		--mount type=bind,source=$(BASE_DIR)/train,target=/train \
 		--mount type=bind,source=$(BASE_DIR)/transformers_cache,target=/transformers_cache \

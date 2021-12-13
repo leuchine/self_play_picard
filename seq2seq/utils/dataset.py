@@ -204,12 +204,17 @@ def _prepare_train_split(
     pre_process_function: Callable[[dict, Optional[int], Optional[int]], dict],
 ) -> TrainSplit:
     schemas = _get_schemas(examples=dataset)
-    dataset = dataset.map(
-        add_serialized_schema,
+    # map is a method of class arrow Dataset: https://huggingface.co/docs/datasets/_modules/datasets/arrow_dataset.html,
+    # signature: dataset -> dataset. i.e. Apply a function to all the elements in the table (individually or in batches) and update the table 
+    dataset = dataset.map( 
+        add_serialized_schema, # only takes 1 argument: ex
         batched=False,
         num_proc=data_training_args.preprocessing_num_workers,
         load_from_cache_file=not data_training_args.overwrite_cache,
-    )
+    ) # dataset= {{"serialized_schema": serialized_schema}, ...}
+    # New features added: 
+    #print("\n After serializing, DATASET", dataset[0], "\n")
+    # features: ['goal', 'query', 'question', 'db_id', 'turn_idx', 'db_path', 'db_table_names', 'db_column_names', 'db_column_types', 'db_primary_keys', 'db_foreign_keys', 'serialized_schema'],
     if data_training_args.max_train_samples is not None:
         dataset = dataset.select(range(data_training_args.max_train_samples))
     column_names = dataset.column_names
@@ -224,6 +229,7 @@ def _prepare_train_split(
         remove_columns=column_names,
         load_from_cache_file=not data_training_args.overwrite_cache,
     )
+    print("\n DATASET", dataset[0])
     return TrainSplit(dataset=dataset, schemas=schemas)
 
 
@@ -334,7 +340,7 @@ def serialize_schema(
     question: str,
     db_path: str,
     db_id: str,
-    db_column_names: Dict[str, str],
+    db_column_names: Dict[str, str], # {"table_id": table_id, "column_name": column_name}
     db_table_names: List[str],
     schema_serialization_type: str = "peteshaw",
     schema_serialization_randomized: bool = False,
@@ -359,11 +365,13 @@ def serialize_schema(
         column_str_with_values = "{column} ( {values} )"
         column_str_without_values = "{column}"
         value_sep = " , "
+        #print("\n", "db_column_names: ", db_column_names,"\n")
     else:
         raise NotImplementedError
 
-    def get_column_str(table_name: str, column_name: str) -> str:
+    def get_column_str(table_name: str, column_name: str) -> str: # only to check if there are matching values
         column_name_str = column_name.lower() if normalize_query else column_name
+        
         if schema_serialization_with_db_content:
             matches = get_database_matches(
                 question=question,
@@ -371,7 +379,9 @@ def serialize_schema(
                 column_name=column_name,
                 db_path=(db_path + "/" + db_id + "/" + db_id + ".sqlite"),
             )
+            # print("MATCH? ", matches)
             if matches:
+                # print("MATCH Yes", value_sep.join(matches))
                 return column_str_with_values.format(column=column_name_str, values=value_sep.join(matches))
             else:
                 return column_str_without_values.format(column=column_name_str)
@@ -379,13 +389,13 @@ def serialize_schema(
             return column_str_without_values.format(column=column_name_str)
 
     tables = [
-        table_str.format(
+        table_str.format( # | table1 : col1 ( val1 , val2 , /...), col2 , col3 ...
             table=table_name.lower() if normalize_query else table_name,
-            columns=column_sep.join(
+            columns=column_sep.join( 
                 map(
-                    lambda y: get_column_str(table_name=table_name, column_name=y[1]),
+                    lambda y: get_column_str(table_name=table_name, column_name=y[1]), # column_name = db_column_names["column_name"]
                     filter(
-                        lambda y: y[0] == table_id,
+                        lambda y: y[0] == table_id, # db_column_names["table_id"] == table_id
                         zip(
                             db_column_names["table_id"],
                             db_column_names["column_name"],
@@ -402,4 +412,4 @@ def serialize_schema(
         serialized_schema = db_id_str.format(db_id=db_id) + table_sep.join(tables)
     else:
         serialized_schema = table_sep.join(tables)
-    return serialized_schema
+    return serialized_schema # "| table1 : col1 ( val1 , val2 , /...), col2 , col3 ... | table2 : ..."

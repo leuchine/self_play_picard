@@ -27,6 +27,7 @@ from seq2seq.utils.args import parse_args
 from seq2seq.utils.dataset_loader import load_dataset
 from seq2seq.utils.spider import SpiderTrainer
 from seq2seq.utils.cosql import CoSQLTrainer
+from seq2seq.utils.sparc import SparcTrainer
 import torch
 
 def main() -> None:
@@ -127,8 +128,8 @@ def main() -> None:
         training_args=training_args,
         tokenizer=tokenizer,
     )
-    print("metric: ", metric)
-    #print("dataset splits: ", dataset_splits)
+    print("sparc metric: ", metric)
+    
 
     # Initialize Picard if necessary
     with PicardLauncher() if picard_args.launch_picard and training_args.local_rank <= 0 else nullcontext(None):
@@ -158,7 +159,7 @@ def main() -> None:
                 "label_smoothing is enabled but the `prepare_decoder_input_ids_from_labels` method is not defined for"
                 f"`{model.__class__.__name__}`. This will lead to loss being calculated twice and will take up more memory"
             )
-        # Initialize Trainer
+        # Initialize Trainer inherits transformers.trainer_seq2seq.Seq2SeqTrainer
         trainer_kwargs = {
             "model": model,
             "args": training_args,
@@ -180,6 +181,8 @@ def main() -> None:
             trainer = SpiderTrainer(**trainer_kwargs)
         elif data_args.dataset in ["cosql", "cosql+spider"]:
             trainer = CoSQLTrainer(**trainer_kwargs)
+        elif data_args.dataset in ["sparc"]:
+            trainer = SparcTrainer(**trainer_kwargs)
         else:
             raise NotImplementedError()
 

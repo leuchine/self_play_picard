@@ -18,8 +18,7 @@ from seq2seq.utils.dataset import (
 )
 from seq2seq.utils.spider import spider_add_serialized_schema, spider_pre_process_function
 from seq2seq.utils.cosql import cosql_add_serialized_schema, cosql_pre_process_function
-# TODO: 
-#from seq2seq.utils.sparc import sparc_add_serialized_schema, sparc_pre_process_function
+from seq2seq.utils.sparc import sparc_add_serialized_schema, sparc_pre_process_function
 
 
 logger = logging.getLogger(__name__)
@@ -89,9 +88,9 @@ def load_dataset(
         path=data_args.dataset_paths["sparc"], cache_dir=model_args.cache_dir
     )
 
-    # _sparc_metric: Callable[[], Metric] = lambda: datasets.load.load_metric(
-    #     path=data_args.metric_paths["sparc"], config_name=data_args.metric_config, test_suite_db_dir=data_args.test_suite_db_dir
-    # )
+    _sparc_metric: Callable[[], Metric] = lambda: datasets.load.load_metric(
+        path=data_args.metric_paths["sparc"], config_name=data_args.metric_config, test_suite_db_dir=data_args.test_suite_db_dir
+    )
 
     # TODO: implement sparc_add_serialized_schema
     _sparc_add_serialized_schema = lambda ex: sparc_add_serialized_schema(
@@ -175,13 +174,14 @@ def load_dataset(
         )
 
     elif data_args.dataset == "sparc":
-        # metric = _sparc_metric()
+        metric = _sparc_metric()
         dataset_splits = prepare_splits(
             dataset_dict=_sparc_dataset_dict(),
             add_serialized_schema=_sparc_add_serialized_schema,
             pre_process_function=_sparc_pre_process_function,
             **_prepare_splits_kwargs,
         )
+        print("here!!")
     
     else:
         raise NotImplementedError()
