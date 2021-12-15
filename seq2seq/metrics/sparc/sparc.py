@@ -34,7 +34,7 @@ _URL = "https://drive.google.com/uc?export=download&id=1_AckYkinAnhqmRQtGsQgUKAn
 
 
 @datasets.utils.file_utils.add_start_docstrings(_DESCRIPTION, _KWARGS_DESCRIPTION)
-class Spider(datasets.Metric):
+class Sparc(datasets.Metric):
     def __init__(
         self,
         config_name: Optional[str] = None,
@@ -80,7 +80,8 @@ class Spider(datasets.Metric):
                     "predictions": datasets.Value("string"),
                     "references": {
                         "query": datasets.Value("string"),
-                        "question": datasets.Value("string"),
+                        "utterances": datasets.features.Sequence(datasets.Value("string")),
+                        "turn_idx": datasets.Value("int32"),
                         "context": datasets.Value("string"),
                         "label": datasets.Value("string"),
                         "db_id": datasets.Value("string"),

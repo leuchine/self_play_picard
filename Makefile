@@ -111,6 +111,7 @@ train: pull-train-image
 		-it \
 		--rm \
 		--runtime=nvidia \
+		-e NVIDIA_VISIBLE_DEVICES=4,5 \
 		--user 13011:13011 \
 		--mount type=bind,source=$(BASE_DIR)/train,target=/train \
 		--mount type=bind,source=$(BASE_DIR)/transformers_cache,target=/transformers_cache \
@@ -157,6 +158,25 @@ train_cosql: pull-train-image
 		tscholak/$(TRAIN_IMAGE_NAME):$(GIT_HEAD_REF) \
 		/bin/bash -c "python seq2seq/run_train_text2sql.py configs/train_cosql.json"
 
+.PHONY: train_sparc
+train_sparc: pull-train-image
+	mkdir -p -m 777 train
+	mkdir -p -m 777 transformers_cache
+	mkdir -p -m 777 wandb
+	docker run \
+		--rm \
+		--runtime=nvidia \
+		-e NVIDIA_VISIBLE_DEVICES=0,1 \
+		--user 13011:13011 \
+		--mount type=bind,source=$(BASE_DIR)/train,target=/train \
+		--mount type=bind,source=$(BASE_DIR)/transformers_cache,target=/transformers_cache \
+		--mount type=bind,source=$(BASE_DIR)/configs,target=/app/configs \
+		--mount type=bind,source=$(BASE_DIR)/wandb,target=/app/wandb \
+		--mount type=bind,source=$(BASE_DIR)/seq2seq,target=/app/seq2seq \
+		tscholak/$(TRAIN_IMAGE_NAME):$(GIT_HEAD_REF) \
+		/bin/bash -c "python seq2seq/run_train_text2sql.py configs/train_sparc.json"
+
+
 .PHONY: train_sql2text_cosql
 train_sql2text_cosql: pull-train-image
 	mkdir -p -m 777 train_sql2text
@@ -174,6 +194,7 @@ train_sql2text_cosql: pull-train-image
 		--mount type=bind,source=$(BASE_DIR)/seq2seq,target=/app/seq2seq \
 		tscholak/$(TRAIN_IMAGE_NAME):$(GIT_HEAD_REF) \
 		/bin/bash -c "pip install sacrebleu;python seq2seq/run_train_sql2text.py configs/train_sql2text_cosql.json"
+
 
 .PHONY: eval
 eval: pull-eval-image

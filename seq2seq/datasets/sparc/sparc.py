@@ -12,8 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""CoSQL: A Conversational Text-to-SQL Challenge Towards Cross-Domain Natural Language Interfaces to Databases"""
-
+"""SParC: Cross-Domain Semantic Parsing in Context"""
 
 import json
 from third_party.spider.preprocess.get_tables import dump_db_json_schema
@@ -23,65 +22,32 @@ import datasets
 
 logger = datasets.logging.get_logger(__name__)
 
-
 _CITATION = """\
-@inproceedings{yu-etal-2019-cosql,
-    title = "{C}o{SQL}: A Conversational Text-to-{SQL} Challenge Towards Cross-Domain Natural Language Interfaces to Databases",
-    author = "Yu, Tao  and
-      Zhang, Rui  and
-      Er, Heyang  and
-      Li, Suyi  and
-      Xue, Eric  and
-      Pang, Bo  and
-      Lin, Xi Victoria  and
-      Tan, Yi Chern  and
-      Shi, Tianze  and
-      Li, Zihan  and
-      Jiang, Youxuan  and
-      Yasunaga, Michihiro  and
-      Shim, Sungrok  and
-      Chen, Tao  and
-      Fabbri, Alexander  and
-      Li, Zifan  and
-      Chen, Luyao  and
-      Zhang, Yuwen  and
-      Dixit, Shreya  and
-      Zhang, Vincent  and
-      Xiong, Caiming  and
-      Socher, Richard  and
-      Lasecki, Walter  and
-      Radev, Dragomir",
-    booktitle = "Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Conference on Natural Language Processing (EMNLP-IJCNLP)",
-    month = nov,
-    year = "2019",
-    address = "Hong Kong, China",
-    publisher = "Association for Computational Linguistics",
-    url = "https://www.aclweb.org/anthology/D19-1204",
-    doi = "10.18653/v1/D19-1204",
-    pages = "1962--1979",
-    abstract = "We present CoSQL, a corpus for building cross-domain, general-purpose database (DB) querying dialogue systems. It consists of 30k+ turns plus 10k+ annotated SQL queries, obtained from a Wizard-of-Oz (WOZ) collection of 3k dialogues querying 200 complex DBs spanning 138 domains. Each dialogue simulates a real-world DB query scenario with a crowd worker as a user exploring the DB and a SQL expert retrieving answers with SQL, clarifying ambiguous questions, or otherwise informing of unanswerable questions. When user questions are answerable by SQL, the expert describes the SQL and execution results to the user, hence maintaining a natural interaction flow. CoSQL introduces new challenges compared to existing task-oriented dialogue datasets: (1) the dialogue states are grounded in SQL, a domain-independent executable representation, instead of domain-specific slot value pairs, and (2) because testing is done on unseen databases, success requires generalizing to new domains. CoSQL includes three tasks: SQL-grounded dialogue state tracking, response generation from query results, and user dialogue act prediction. We evaluate a set of strong baselines for each task and show that CoSQL presents significant challenges for future research. The dataset, baselines, and leaderboard will be released at https://yale-lily.github.io/cosql.",
+@misc{yu2019sparc,
+      title={SParC: Cross-Domain Semantic Parsing in Context}, 
+      author={Tao Yu and Rui Zhang and Michihiro Yasunaga and Yi Chern Tan and Xi Victoria Lin and Suyi Li and Heyang Er and Irene Li and Bo Pang and Tao Chen and Emily Ji and Shreya Dixit and David Proctor and Sungrok Shim and Jonathan Kraft and Vincent Zhang and Caiming Xiong and Richard Socher and Dragomir Radev},
+      year={2019},
+      eprint={1906.02285},
+      archivePrefix={arXiv},
+      primaryClass={cs.CL}
 }
 """
-
 _DESCRIPTION = """\
-CoSQL is a large-scale dataset for training and testing task oriented dialog agents with SQL
+CoSQL is a large-scale dataset for cross-domain SemanticParsing in Context
 """
-
-_HOMEPAGE = "https://yale-lily.github.io/cosql"
-
+_HOMEPAGE = "https://github.com/taoyds/sparc"
 _LICENSE = "CC BY-SA 4.0"
 
-_URL = "https://drive.google.com/uc?export=download&id=14x6lsWqlu6gR-aYxa6cemslDN3qT3zxP"
+_URL = "https://drive.google.com/uc?export=download&id=13Abvu5SUMSP3SJM-ZIj66mOkeyAquR73"
 
-
-class CoSQL(datasets.GeneratorBasedBuilder):
+class Sparc(datasets.GeneratorBasedBuilder):
     VERSION = datasets.Version("1.0.0")
 
     BUILDER_CONFIGS = [
         datasets.BuilderConfig(
-            name="cosql",
+            name="sparc",
             version=VERSION,
-            description="A Conversational Text-to-SQL Challenge Towards Cross-Domain Natural Language Interfaces to Databases",
+            description="a large-scale dataset for cross-domain SemanticParsing in Context",
         ),
     ]
 
@@ -132,26 +98,28 @@ class CoSQL(datasets.GeneratorBasedBuilder):
             datasets.SplitGenerator(
                 name=datasets.Split.TRAIN,
                 gen_kwargs={
-                    "data_filepath": downloaded_filepath + "/cosql_dataset/sql_state_tracking/cosql_train.json",
-                    "db_path": downloaded_filepath + "/cosql_dataset/database",
+                    "data_filepath": downloaded_filepath + "/sparc/train.json",
+                    "db_path": downloaded_filepath + "/sparc/database",
                 },
             ),
             datasets.SplitGenerator(
                 name=datasets.Split.VALIDATION,
                 gen_kwargs={
-                    "data_filepath": downloaded_filepath + "/cosql_dataset/sql_state_tracking/cosql_dev.json",
-                    "db_path": downloaded_filepath + "/cosql_dataset/database",
+                    "data_filepath": downloaded_filepath + "/sparc/dev.json",
+                    "db_path": downloaded_filepath + "/sparc/database",
                 },
             ),
         ]
 
+    # tutorial: https://huggingface.co/docs/datasets/add_dataset.html
+    # The input arguments of datasets.DatasetBuilder._generate_examples() are defined by t
+    # he gen_kwargs dictionary returned by the datasets.DatasetBuilder._split_generator()
     def _generate_examples(self, data_filepath, db_path):
-        """This function returns the examples in the raw (text) form."""
         logger.info("generating examples from = %s", data_filepath)
         idx = 0 # indexing each training instance
         with open(data_filepath, encoding="utf-8") as f:
-            cosql = json.load(f)
-            for sample in cosql:
+            sparc = json.load(f)
+            for sample in sparc:
                 db_id = sample["database_id"]
                 if db_id not in self.schema_cache:
                     self.schema_cache[db_id] = dump_db_json_schema(
@@ -174,11 +142,10 @@ class CoSQL(datasets.GeneratorBasedBuilder):
                         for column_id, other_column_id in schema["foreign_keys"]
                     ],
                 }
-
                 yield idx, {
                     "goal": sample["final"]["query"],
-                    "utterances": [sample["final"]["utterance"]],
-                    "question": sample["final"]["utterance"].replace("|", "/"),
+                    "utterances": [sample["final"]["utterance"]], # a list
+                    "question": sample["final"]["utterance"], 
                     "query": sample["final"]["query"],
                     "turn_idx": -1,
                     **db_info,
@@ -186,13 +153,18 @@ class CoSQL(datasets.GeneratorBasedBuilder):
                 idx += 1
                 utterances = []
                 for turn_idx, turn in enumerate(sample["interaction"]):
-                    utterances.extend((utterance.strip() for utterance in turn["utterance"].split(sep="|")))
+                    utterances.extend(turn["utterance"]) # for each turn, its utterance is all the history utterances in that turn
                     yield idx, {
                         "goal": sample["final"]["query"],
                         "utterances": list(utterances),
-                        "question": turn["utterance"].replace("|", "/"),
+                        "question": turn["utterance"], # question is the current utternace (no history)
                         "query": turn["query"],
                         "turn_idx": turn_idx,
                         **db_info,
                     }
                     idx += 1
+
+
+
+
+

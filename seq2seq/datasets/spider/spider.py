@@ -97,6 +97,7 @@ class Spider(datasets.GeneratorBasedBuilder):
 
     def _split_generators(self, dl_manager) -> List[datasets.SplitGenerator]:
         downloaded_filepath = dl_manager.download_and_extract(_URL)
+        print("downloaded spider to: ", downloaded_filepath)
 
         return [
             datasets.SplitGenerator(

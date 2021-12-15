@@ -24,7 +24,7 @@ def spider_get_target(
     _normalize = normalize if normalize_query else (lambda x: x)
     return f"{db_id} | {_normalize(query)}" if target_with_db_id else _normalize(query)
 
-
+# ex is a dictionary, e.g. contains ["questions"], "db_path", as returned by yield from generate()
 def spider_add_serialized_schema(ex: dict, data_training_args: DataTrainingArguments) -> dict:
     serialized_schema = serialize_schema(
         question=ex["question"],

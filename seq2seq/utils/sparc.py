@@ -7,7 +7,7 @@ from seq2seq.utils.dataset import DataTrainingArguments, normalize, serialize_sc
 from seq2seq.utils.trainer import Seq2SeqTrainer, EvalPrediction
 
 
-def cosql_get_input(
+def sparc_get_input(
     utterances: List[str],
     serialized_schema: str,
     prefix: str,
@@ -22,7 +22,7 @@ def cosql_get_input(
     return prefix + utterances[-1].strip() + " " + serialized_schema.strip() + serialized_reversed_utterance_head
 
 
-def cosql_get_target(
+def sparc_get_target(
     query: str,
     db_id: str,
     normalize_query: bool,
@@ -32,10 +32,7 @@ def cosql_get_target(
     return f"{db_id} | {_normalize(query)}" if target_with_db_id else _normalize(query)
 
 
-def cosql_add_serialized_schema(
-    ex: dict,
-    data_training_args: DataTrainingArguments,
-) -> dict:
+def sparc_add_serialized_schema(ex: dict, data_training_args: DataTrainingArguments) -> dict:
     serialized_schema = serialize_schema(
         question=" | ".join(ex["utterances"]),
         db_path=ex["db_path"],
@@ -51,7 +48,7 @@ def cosql_add_serialized_schema(
     return {"serialized_schema": serialized_schema}
 
 
-def cosql_pre_process_function(
+def sparc_pre_process_function(
     batch: dict,
     max_source_length: Optional[int],
     max_target_length: Optional[int],
@@ -61,9 +58,10 @@ def cosql_pre_process_function(
     prefix = data_training_args.source_prefix if data_training_args.source_prefix is not None else ""
 
     inputs = [
-        cosql_get_input(utterances=utterances, serialized_schema=serialized_schema, prefix=prefix)
+        sparc_get_input(utterances=utterances, serialized_schema=serialized_schema, prefix=prefix)
         for utterances, serialized_schema in zip(batch["utterances"], batch["serialized_schema"])
     ]
+    print("sparc input to encoder: ", inputs)
 
     model_inputs: dict = tokenizer(
         inputs,
@@ -74,7 +72,7 @@ def cosql_pre_process_function(
     )
 
     targets = [
-        cosql_get_target(
+        sparc_get_target(
             query=query,
             db_id=db_id,
             normalize_query=data_training_args.normalize_query,
@@ -82,6 +80,7 @@ def cosql_pre_process_function(
         )
         for db_id, query in zip(batch["db_id"], batch["query"])
     ]
+    print("sparc label to encoder: ", targets)
 
     # Setup the tokenizer for targets
     with tokenizer.as_target_tokenizer():
@@ -97,7 +96,7 @@ def cosql_pre_process_function(
     return model_inputs
 
 
-class CoSQLTrainer(Seq2SeqTrainer):
+class SparcTrainer(Seq2SeqTrainer):
     def _post_process_function(
         self, examples: Dataset, features: Dataset, predictions: np.ndarray, stage: str
     ) -> EvalPrediction:
