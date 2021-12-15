@@ -153,7 +153,7 @@ class Sparc(datasets.GeneratorBasedBuilder):
                 idx += 1
                 utterances = []
                 for turn_idx, turn in enumerate(sample["interaction"]):
-                    utterances.extend(turn["utterance"]) # for each turn, its utterance is all the history utterances in that turn
+                    utterances.extend([turn["utterance"]]) # for each turn, its utterance is all the history utterances in that turn
                     yield idx, {
                         "goal": sample["final"]["query"],
                         "utterances": list(utterances),

@@ -9,7 +9,7 @@
     "schema_serialization_with_db_content": true,
     "normalize_query": true,
     "target_with_db_id": true,
-    "output_dir": "/train",
+    "output_dir": "/train_sparc",
     "cache_dir": "/transformers_cache",
     "do_train": true,
     "do_eval": true,
@@ -40,5 +40,6 @@
     "predict_with_generate": true,
     "num_beams": 1,
     "num_beam_groups": 1,
-    "use_picard": false
+    "use_picard": false,
+    "overwrite_output_dir": true
 }

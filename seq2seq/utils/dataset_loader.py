@@ -98,7 +98,8 @@ def load_dataset(
         data_training_args=data_training_args,
     )
 
-    # TODO: implement sparc_pre_process_function 
+    # TODO: implement sparc_pre_process_function
+    # _sparc_pre_process_function's type: Callable[[dict, Optional[int], Optional[int]], dict] it returns a dict
     _sparc_pre_process_function = lambda batch, max_source_length, max_target_length: sparc_pre_process_function(
         batch=batch,
         max_source_length=max_source_length,
@@ -122,6 +123,8 @@ def load_dataset(
             pre_process_function=_spider_pre_process_function,
             **_prepare_splits_kwargs,
         )
+
+
     elif data_args.dataset == "cosql":
         metric = _cosql_metric()
         dataset_splits = prepare_splits(
@@ -130,6 +133,7 @@ def load_dataset(
             pre_process_function=_cosql_pre_process_function,
             **_prepare_splits_kwargs,
         )
+        
     elif data_args.dataset == "cosql+spider":
         metric = _cosql_metric()
         cosql_dataset_splits = prepare_splits(
@@ -173,6 +177,8 @@ def load_dataset(
             schemas=schemas,
         )
 
+
+
     elif data_args.dataset == "sparc":
         metric = _sparc_metric()
         dataset_splits = prepare_splits(
@@ -181,8 +187,6 @@ def load_dataset(
             pre_process_function=_sparc_pre_process_function,
             **_prepare_splits_kwargs,
         )
-        print("here!!")
-    
     else:
         raise NotImplementedError()
 
