@@ -35,4 +35,5 @@ def compute_exact_match_metric(predictions, references) -> Dict[str, Any]:
     evaluator.finalize()
     return {
         "exact_match": evaluator.scores["all"]["exact"],
+        "partial": evaluator.scores["all"]["partial"],
     }

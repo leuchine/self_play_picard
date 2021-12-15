@@ -1,5 +1,5 @@
 {
-    "model_path": "tscholak/3vnuv1vf",
+    "model_path": "/train/checkpoint-6",
     "source_prefix": "",
     "schema_serialization_type": "peteshaw",
     "schema_serialization_randomized": false,

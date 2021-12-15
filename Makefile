@@ -165,7 +165,7 @@ train_sql2text_cosql: pull-train-image
 	docker run \
 		--rm \
 		--runtime=nvidia \
-		-e NVIDIA_VISIBLE_DEVICES=6 \
+		-e NVIDIA_VISIBLE_DEVICES=5 \
 		--user 13011:13011 \
 		--mount type=bind,source=$(BASE_DIR)/train_sql2text,target=/train_sql2text \
 		--mount type=bind,source=$(BASE_DIR)/transformers_cache,target=/transformers_cache \
@@ -207,6 +207,27 @@ eval_cosql: pull-eval-image
 		tscholak/$(EVAL_IMAGE_NAME):$(GIT_HEAD_REF) \
 		/bin/bash -c "python seq2seq/run_train_text2sql.py configs/eval_cosql.json"
 
+.PHONY: self_play_cosql
+self_play_cosql: pull-eval-image
+	mkdir -p -m 777 database
+	mkdir -p -m 777 transformers_cache
+	docker run \
+		-it \
+		--rm \
+		--user 13011:13011 \
+		-p 8000:8000 \
+		--runtime=nvidia \
+		-e NVIDIA_VISIBLE_DEVICES=0 \
+		--mount type=bind,source=$(BASE_DIR)/database,target=/database \
+		--mount type=bind,source=$(BASE_DIR)/gazp-main,target=/gazp-main \
+		--mount type=bind,source=$(BASE_DIR)/train,target=/train \
+		--mount type=bind,source=$(BASE_DIR)/train_sql2text,target=/train_sql2text \
+		--mount type=bind,source=$(BASE_DIR)/transformers_cache,target=/transformers_cache \
+		--mount type=bind,source=$(BASE_DIR)/configs,target=/app/configs \
+		--mount type=bind,source=$(BASE_DIR)/seq2seq,target=/app/seq2seq \
+		tscholak/$(EVAL_IMAGE_NAME):$(GIT_HEAD_REF) \
+		/bin/bash -c "python seq2seq/run_self_play.py configs/self_play_cosql.json"
+
 .PHONY: serve
 serve: pull-eval-image
 	mkdir -p -m 777 database
@@ -216,7 +237,9 @@ serve: pull-eval-image
 		--rm \
 		--user 13011:13011 \
 		-p 8000:8000 \
+		--runtime=nvidia \
 		--mount type=bind,source=$(BASE_DIR)/database,target=/database \
+		--mount type=bind,source=$(BASE_DIR)/train,target=/train \
 		--mount type=bind,source=$(BASE_DIR)/transformers_cache,target=/transformers_cache \
 		--mount type=bind,source=$(BASE_DIR)/configs,target=/app/configs \
 		tscholak/$(EVAL_IMAGE_NAME):$(GIT_HEAD_REF) \

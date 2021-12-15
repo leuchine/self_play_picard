@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="e7c760ac-6876-44a6-af9d-d7e812194d0c" name="dgx1">
+        <fileTransfer accessType="SFTP" host="dgx1.cs.ox.ac.uk" port="22" sshConfigId="aa67e554-6b5c-407a-8b02-93b3aa8ec58e" sshConfig="qiliu@dgx1.cs.ox.ac.uk:22 password">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>
