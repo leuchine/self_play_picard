@@ -41,5 +41,5 @@
     "num_beams": 1,
     "num_beam_groups": 1,
     "use_picard": false,
-    "overwrite_output_dir": true
+    "overwrite_output_dir": false
 }
