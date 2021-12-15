@@ -187,6 +187,13 @@ def load_dataset(
             pre_process_function=_sparc_pre_process_function,
             **_prepare_splits_kwargs,
         )
+
+        # print(tokenizer.decode((dataset_splits.train_split.dataset[0])["input_ids"]))
+        # print("\n")
+        # print(tokenizer.decode((dataset_splits.train_split.dataset[1])["input_ids"]))
+        # print("\n")
+        # print(tokenizer.decode((dataset_splits.train_split.dataset[2])["input_ids"]))
+
     else:
         raise NotImplementedError()
 

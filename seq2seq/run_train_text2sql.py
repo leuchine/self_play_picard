@@ -32,14 +32,6 @@ import torch
 
 def main() -> None:
     picard_args, model_args, data_args, data_training_args, training_args, _ = parse_args()
-<<<<<<< HEAD:seq2seq/run_train_text2sql.py
-=======
-    # print("picard_arg: ", picard_args)
-    # print("model_args: ", model_args)
-    # print("data_args: ", data_args)
-    # print("data_training_args: ", data_training_args)
-    # print("training args: ", training_args)
->>>>>>> 82b04e25a5f9245dfc532a152aeb121789b01f71:seq2seq/run_seq2seq.py
     
     # If model_name_or_path includes ??? instead of the number of steps, 
     # we load the latest checkpoint.
@@ -131,11 +123,7 @@ def main() -> None:
         training_args=training_args,
         tokenizer=tokenizer,
     )
-<<<<<<< HEAD:seq2seq/run_train_text2sql.py
     # print("sparc metric: ", metric)
-=======
-    print("sparc metric: ", metric)
->>>>>>> 82b04e25a5f9245dfc532a152aeb121789b01f71:seq2seq/run_seq2seq.py
     
 
     # Initialize Picard if necessary

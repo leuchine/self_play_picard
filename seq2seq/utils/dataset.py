@@ -228,7 +228,6 @@ def _prepare_train_split(
         remove_columns=column_names,
         load_from_cache_file=not data_training_args.overwrite_cache,
     )
-    print("\n DATASET", dataset[0])
     return TrainSplit(dataset=dataset, schemas=schemas)
 
 
