@@ -32,11 +32,6 @@ import torch
 
 def main() -> None:
     picard_args, model_args, data_args, data_training_args, training_args, _ = parse_args()
-    # print("picard_arg: ", picard_args)
-    # print("model_args: ", model_args)
-    # print("data_args: ", data_args)
-    # print("data_training_args: ", data_training_args)
-    # print("training args: ", training_args)
     
     # If model_name_or_path includes ??? instead of the number of steps, 
     # we load the latest checkpoint.
@@ -128,7 +123,7 @@ def main() -> None:
         training_args=training_args,
         tokenizer=tokenizer,
     )
-    print("sparc metric: ", metric)
+    # print("sparc metric: ", metric)
     
 
     # Initialize Picard if necessary

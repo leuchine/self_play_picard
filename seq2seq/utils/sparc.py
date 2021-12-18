@@ -19,6 +19,8 @@ def sparc_get_input(
         serialized_reversed_utterance_head = " || " + sep.join(reversed_utterance_head)
     else:
         serialized_reversed_utterance_head = ""
+    # print("serialized_schema.strip(): ",serialized_schema.strip(), "\n")
+    # print("sparc input to encoder: ", prefix + utterances[-1].strip() + " " + serialized_schema.strip() + serialized_reversed_utterance_head)
     return prefix + utterances[-1].strip() + " " + serialized_schema.strip() + serialized_reversed_utterance_head
 
 
@@ -61,7 +63,6 @@ def sparc_pre_process_function(
         sparc_get_input(utterances=utterances, serialized_schema=serialized_schema, prefix=prefix)
         for utterances, serialized_schema in zip(batch["utterances"], batch["serialized_schema"])
     ]
-    print("sparc input to encoder: ", inputs)
 
     model_inputs: dict = tokenizer(
         inputs,
@@ -80,7 +81,6 @@ def sparc_pre_process_function(
         )
         for db_id, query in zip(batch["db_id"], batch["query"])
     ]
-    print("sparc label to encoder: ", targets)
 
     # Setup the tokenizer for targets
     with tokenizer.as_target_tokenizer():

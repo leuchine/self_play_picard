@@ -207,19 +207,18 @@ def _prepare_train_split(
     schemas = _get_schemas(examples=dataset)
     # map is a method of class arrow Dataset: https://huggingface.co/docs/datasets/_modules/datasets/arrow_dataset.html,
     # signature: dataset -> dataset. i.e. Apply a function to all the elements in the table (individually or in batches) and update the table 
+    # dataset is data[train]
     dataset = dataset.map( 
         add_serialized_schema, # only takes 1 argument: ex
         batched=False,
         num_proc=data_training_args.preprocessing_num_workers,
         load_from_cache_file=not data_training_args.overwrite_cache,
     ) # dataset= {{"serialized_schema": serialized_schema}, ...}
-    # New features added: 
-    #print("\n After serializing, DATASET", dataset[0], "\n")
     # features: ['goal', 'query', 'question', 'db_id', 'turn_idx', 'db_path', 'db_table_names', 'db_column_names', 'db_column_types', 'db_primary_keys', 'db_foreign_keys', 'serialized_schema'],
     if data_training_args.max_train_samples is not None:
         dataset = dataset.select(range(data_training_args.max_train_samples))
     column_names = dataset.column_names
-    dataset = dataset.map(
+    dataset = dataset.map( # (for each example in dataset apply preprocess function)
         lambda batch: pre_process_function(
             batch=batch,
             max_source_length=data_training_args.max_source_length,
@@ -230,7 +229,6 @@ def _prepare_train_split(
         remove_columns=column_names,
         load_from_cache_file=not data_training_args.overwrite_cache,
     )
-    print("\n DATASET", dataset[0])
     return TrainSplit(dataset=dataset, schemas=schemas)
 
 
@@ -275,6 +273,7 @@ def prepare_splits(
     add_serialized_schema: Callable[[dict], dict],
     pre_process_function: Callable[[dict, Optional[int], Optional[int]], dict],
 ) -> DatasetSplits:
+
     train_split, eval_split, test_splits = None, None, None
 
     if training_args.do_train:
