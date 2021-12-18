@@ -1,3 +1,5 @@
+# todo: most self play data have single turns...
+
 import sys
 import logging
 
@@ -30,10 +32,33 @@ import re
 import datasets.load
 from third_party.spider.preprocess.get_tables import dump_db_json_schema
 
+
+def convert_utterances(utterances):
+    new_utterances = []
+    for u in utterances:
+        new_utterances.extend(re.split("/|\|", u))
+    return new_utterances
+
 def read_goals(path):
     goals = json.load(open(path))
     return goals
 
+def save_self_play_data(file_writer,
+                        db_id,
+                        previous_utterance,
+                        previous_sql):
+    assert len(previous_utterance) == len(previous_sql)
+    for idx in range(len(previous_utterance)):
+        turn_data = {
+            "goal": previous_sql[-1],
+            "utterances": convert_utterances(previous_utterance[:idx + 1]),
+            "question": previous_utterance[idx].replace("|", "/"),
+            "query": previous_sql[idx],
+            "db_id": db_id,
+            "turn_idx": idx,
+        }
+        file_writer.write(json.dumps(turn_data) + '\n')
+        file_writer.flush()
 
 def filter(metrics, goal, infer_sql, self_play_args, threshold=0.9):
     def create_reference(goal, self_play_args):
@@ -89,12 +114,18 @@ class SelfPlayArguments:
             "help": "Path of tables"
         },
     )
+    dataset_path: str = field(
+        metadata={
+            "help": "Path of the dataset."
+        },
+    )
     device: int = field(
         default=0,
         metadata={
             "help": "Device ordinal for CPU/GPU supports. Setting this to -1 will leverage CPU. A non-negative value will run the model on the corresponding CUDA device id."
         },
     )
+
 
 class PretrainedSQL2Text:
 
@@ -114,6 +145,7 @@ class PretrainedSQL2Text:
         self.schema_cache = {}
 
     def generate(self, goal, previous_utterance, previous_sql, db_id):
+        previous_utterance = convert_utterances(previous_utterance)
         # get serialized schema
         if db_id not in self.schema_cache:
             self.schema_cache[db_id] = get_schema(db_path=self.self_play_args.db_path, db_id=db_id)
@@ -211,6 +243,7 @@ class PretrainedText2SQL:
         )
 
     def generate(self, utterances, db_id):
+        utterances = convert_utterances(utterances)
         outputs = self.pipe(inputs=ConversationalText2SQLInput(utterances=utterances,
                                             db_id=db_id))
         output = outputs[0]
@@ -225,44 +258,37 @@ def run_self_play(data_args, self_play_args, text2sql_model, sql2text_model):
                                              test_suite_db_dir=data_args.test_suite_db_dir)
     keep_count = 0
     total_count = 0
-    # with open(args['preprocessed_path'] + "/enc/self_play.jsonl", 'w') as enc_writer, open(
-    #        args['preprocessed_path'] + "/dec/self_play.jsonl", 'w') as dec_writer, open(
-    #        os.path.dirname(args['table_path']) + "/self_play_sql2text.jsonl", 'w') as sql2text_writer:
-    for goal in goals:
-        goal['sql'] = replace_table_alias(goal['sql'])
-        try:  # ill-formatted SQL from GAZP.
-            parse_one_sql(goal['sql'], goal['db_id'], self_play_args.table_path)
-        except:
-            continue
-        previous_utterance, previous_sql = [], []
-        eos = False
-        count = 0
-        try:
-            while count < 5 and not eos:
-                # sql2text
-                new_utterance, eos = sql2text_model.generate(goal, previous_utterance, previous_sql, goal['db_id'])
-                previous_utterance.extend(re.split("/|\|", new_utterance))
+    with open(os.path.join(self_play_args.dataset_path, "self_play.jsonl"), 'w') as file_writer:
+        for goal in goals:
+            goal['sql'] = replace_table_alias(goal['sql'])
+            try:  # ill-formatted SQL from GAZP.
+                parse_one_sql(goal['sql'], goal['db_id'], self_play_args.table_path)
+            except:
+                continue
+            previous_utterance, previous_sql = [], []
+            eos = False
+            count = 0
+            try:
+                while count < 5 and not eos:
+                    # sql2text
+                    new_utterance, eos = sql2text_model.generate(goal, previous_utterance, previous_sql, goal['db_id'])
+                    previous_utterance.append(new_utterance)
+                    # text2sql
+                    new_sql = text2sql_model.generate(previous_utterance, goal['db_id'])
+                    previous_sql.append(new_sql)
+                    count += 1
+            except (ValueError, TypeError, KeyError) as e:
+                continue  # skip this dialogue for now.
+            total_count += 1
+            if filter(metrics, goal, previous_sql[-1], self_play_args):
+                keep_count += 1
+                print([goal['db_id'], goal['sql'], previous_utterance, previous_sql])
+                save_self_play_data(file_writer,
+                                    goal['db_id'],
+                                    previous_utterance,
+                                    previous_sql)
 
-                # text2sql
-                new_sql = text2sql_model.generate(previous_utterance, goal['db_id'])
-                previous_sql.append(new_sql)
-                count += 1
-        except (ValueError, TypeError, KeyError) as e:
-            continue  # skip this dialogue for now.
-        total_count += 1
-        if filter(metrics, goal, previous_sql[-1], self_play_args):
-            keep_count += 1
-            print([goal['db_id'], goal['sql'], previous_utterance, previous_sql])
-            #save_self_play_data(args,
-            #                    enc_writer,
-            #                    dec_writer,
-            #                    sql2text_writer,
-            #                    goal['db_id'],
-            #                    previous_utterance,
-            #                    previous_sql,
-            #                    text2sql_model)
-
-        print("keep rate: %.2f" % (float(keep_count) / total_count))
+            print("keep rate: %.2f" % (float(keep_count) / total_count))
 
 
 
@@ -292,80 +318,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-"""
-import itertools
-import json
-import os
-
-import _jsonnet
-import torch
-import attr
-# These imports are needed for registry.lookup
-# noinspection PyUnresolvedReferences
-from ratsql import beam_search
-# noinspection PyUnresolvedReferences
-from ratsql import datasets
-# noinspection PyUnresolvedReferences
-from ratsql import grammars
-# noinspection PyUnresolvedReferences
-from ratsql import models
-# noinspection PyUnresolvedReferences
-from ratsql import optimizers
-from ratsql.models.spider import spider_beam_search
-from ratsql.utils import registry
-from ratsql.utils import saver as saver_mod
-
-from ratsql.commands.preprocess_sql2text import convert_schema, add_turns_to_context
-from transformers import T5Tokenizer
-from ratsql.utils.evaluation import *
-import os
-
-
-
-def save_self_play_data(args,
-                        enc_writer,
-                        dec_writer,
-                        sql2text_writer,
-                        db_id,
-                        previous_utterance,
-                        previous_sql,
-                        text2sql_model):
-    assert len(previous_utterance) == len(previous_sql)
-    # save data for text2sql
-    for idx in range(len(previous_utterance)):
-        utterance = ' <s> '.join(reversed(previous_utterance[:idx + 1]))
-        sql = previous_sql[idx]
-        try:
-            parsed_sql = parse_one_sql(sql, db_id, args['table_path'])
-            data_item = text2sql_model.dataset.convert_turn(utterance, utterance.split(), parsed_sql, db_id)
-
-
-            encoder_input = text2sql_model.model_preproc.enc_preproc.preprocess_item(data_item, None)
-            decoder_output = text2sql_model.model_preproc.dec_preproc.preprocess_item(data_item,
-                                                                                       section='self_play',
-                                                                                       return_empty=False)
-        except (ValueError, KeyError) as _:
-            continue  # Exception from RAT-SQL parsing
-
-        enc_writer.write(json.dumps(encoder_input) + '\n')
-        dec_writer.write(json.dumps(attr.asdict(decoder_output)) + '\n')
-        enc_writer.flush()
-        dec_writer.flush()
-
-    # save data for sql2text
-    turns = []
-    for idx in range(len(previous_utterance)):
-        utterance = ' <s> '.join(reversed(previous_utterance[:idx + 1]))
-        sql = previous_sql[idx]
-        data_item = text2sql_model.dataset.convert_turn(utterance, utterance.split(), {}, db_id)
-        schema = convert_schema(data_item.schema, text2sql_model.model_preproc.enc_preproc)
-        turns.append({'question': utterance,
-                      'query': sql,
-                      'schema': schema})
-    contexts = []
-    add_turns_to_context(contexts, turns)
-    for row in contexts:
-        sql2text_writer.write(json.dumps(row) + '\n')
-    sql2text_writer.flush()
-"""

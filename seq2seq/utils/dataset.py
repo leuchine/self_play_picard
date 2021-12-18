@@ -133,7 +133,8 @@ class DataArguments:
         default_factory=lambda: {
             "spider": "./seq2seq/datasets/spider",
             "cosql": "./seq2seq/datasets/cosql",
-            "sparc": "./seq2seq/datasets/sparc"
+            "sparc": "./seq2seq/datasets/sparc",
+            "self_play": "./seq2seq/datasets/self_play"
         },
         metadata={"help": "Paths of the dataset modules."},
     )
