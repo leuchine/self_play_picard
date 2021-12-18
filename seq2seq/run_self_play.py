@@ -114,11 +114,6 @@ class SelfPlayArguments:
             "help": "Path of tables"
         },
     )
-    dataset_path: str = field(
-        metadata={
-            "help": "Path of the dataset."
-        },
-    )
     device: int = field(
         default=0,
         metadata={
@@ -258,7 +253,8 @@ def run_self_play(data_args, self_play_args, text2sql_model, sql2text_model):
                                              test_suite_db_dir=data_args.test_suite_db_dir)
     keep_count = 0
     total_count = 0
-    with open(os.path.join(self_play_args.dataset_path, "self_play.jsonl"), 'w') as file_writer:
+    os.makedirs(data_args.save_self_play_path, exist_ok=True)
+    with open(os.path.join(data_args.save_self_play_path, "self_play.jsonl"), 'w') as file_writer:
         for goal in goals:
             goal['sql'] = replace_table_alias(goal['sql'])
             try:  # ill-formatted SQL from GAZP.

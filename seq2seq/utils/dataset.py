@@ -1,6 +1,6 @@
+from datasets.dataset_dict import DatasetDict
 from typing import Optional, List, Dict, Callable
 from dataclasses import dataclass, field
-from datasets.dataset_dict import DatasetDict
 from datasets.arrow_dataset import Dataset
 from transformers.training_args import TrainingArguments
 from seq2seq.utils.bridge_content_encoder import get_database_matches
@@ -126,6 +126,11 @@ class DataTrainingArguments:
 
 @dataclass
 class DataArguments:
+    save_self_play_path: str = field(
+        metadata={
+            "help": "Path for saving self-play data."
+        },
+    )
     dataset: str = field(
         metadata={"help": "The dataset to be used. Choose between ``spider``, ``cosql``, or ``cosql+spider``, or ``sparc``."},
     )

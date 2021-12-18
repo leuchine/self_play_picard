@@ -116,7 +116,20 @@ def main() -> None:
         tokenizer.add_tokens([AddedToken(" <="), AddedToken(" <")])
     print(data_args, model_args, data_training_args, training_args)
     # Load dataset
+    """
+    _, self_play_dataset_splits = load_dataset(
+        dataset_to_load="self_play",
+        data_args=data_args,
+        model_args=model_args,
+        data_training_args=data_training_args,
+        training_args=training_args,
+        tokenizer=tokenizer,
+    )
+    print(tokenizer.decode(self_play_dataset_splits.dataset[0]['input_ids']))
+    print(tokenizer.decode(self_play_dataset_splits.dataset[0]['labels']))
+    """
     metric, dataset_splits = load_dataset(
+        dataset_to_load=data_args.dataset,
         data_args=data_args,
         model_args=model_args,
         data_training_args=data_training_args,

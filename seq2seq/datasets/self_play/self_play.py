@@ -41,14 +41,19 @@ class SelfPlayData(datasets.GeneratorBasedBuilder):
     ]
 
     def __init__(self, *args, writer_batch_size=None, **kwargs):
+        dataset_in_use = kwargs['dataset_in_use']
+        self.save_self_play_path = kwargs['save_self_play_path']
+        del kwargs['dataset_in_use']
+        del kwargs['save_self_play_path']
         super().__init__(*args, writer_batch_size=writer_batch_size, **kwargs)
         self.schema_cache = dict()
-        if 'cosql' in self.path:
+        if 'cosql' in dataset_in_use:
             self.dataset = 'cosql_dataset'
-        elif 'sparc' in self.path:
+        elif 'sparc' in dataset_in_use:
             self.dataset = 'sparc_dataset'
         else:
             raise Exception("Unknown dataset")
+
 
     def _info(self):
         features = datasets.Features(
@@ -93,12 +98,11 @@ class SelfPlayData(datasets.GeneratorBasedBuilder):
             _URL = "https://drive.google.com/uc?export=download&id=13Abvu5SUMSP3SJM-ZIj66mOkeyAquR73"
 
         downloaded_filepath = dl_manager.download_and_extract(_URL)
-
         return [
             datasets.SplitGenerator(
-                name=datasets.Split.train,
+                name=datasets.Split.TRAIN,
                 gen_kwargs={
-                    "data_filepath": downloaded_filepath + "/{}/self_play.jsonl".format(self.dataset),
+                    "data_filepath": self.save_self_play_path + "/self_play.jsonl",
                     "db_path": downloaded_filepath + "/{}/database".format(self.dataset),
                 },
             ),
@@ -110,7 +114,7 @@ class SelfPlayData(datasets.GeneratorBasedBuilder):
         idx = 0 # indexing each training instance
         with open(data_filepath) as f:
             for line in f:
-                turn_data = json.load(f)
+                turn_data = json.loads(line)
                 db_id = turn_data["db_id"]
                 if db_id not in self.schema_cache:
                     self.schema_cache[db_id] = dump_db_json_schema(

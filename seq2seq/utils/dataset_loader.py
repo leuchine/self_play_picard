@@ -37,6 +37,7 @@ def _log_duplicate_count(dataset: Dataset, dataset_name: str, split: str) -> Non
 
 
 def load_dataset(
+    dataset_to_load: str,
     data_args: DataArguments,
     model_args: ModelArguments,
     data_training_args: DataTrainingArguments,
@@ -67,14 +68,10 @@ def load_dataset(
     _cosql_metric: Callable[[], Metric] = lambda: datasets.load.load_metric(
         path=data_args.metric_paths["cosql"], config_name=data_args.metric_config, test_suite_db_dir=data_args.test_suite_db_dir
     )
-
-    
     _cosql_add_serialized_schema = lambda ex: cosql_add_serialized_schema(
         ex=ex,
         data_training_args=data_training_args,
     )
-
-    
     _cosql_pre_process_function = lambda batch, max_source_length, max_target_length: cosql_pre_process_function(
         batch=batch,
         max_source_length=max_source_length,
@@ -108,6 +105,22 @@ def load_dataset(
         tokenizer=tokenizer,
     )
 
+    # self play data
+    if dataset_to_load == 'self_play':
+        if 'sparc' in data_args.dataset:
+            _self_play_add_serialized_schema = _sparc_add_serialized_schema
+            _self_play_pre_process_function = _sparc_pre_process_function
+        elif 'cosql' in data_args.dataset:
+            _self_play_add_serialized_schema = _cosql_add_serialized_schema
+            _self_play_pre_process_function = _cosql_pre_process_function
+        else:
+            raise Exception("Unknown self-play dataset to load")
+        _self_play_dataset_dict: Callable[[], DatasetDict] = lambda: datasets.load.load_dataset(
+            path=data_args.dataset_paths["self_play"],
+            download_mode=datasets.GenerateMode.FORCE_REDOWNLOAD,
+            dataset_in_use=data_args.dataset,
+            save_self_play_path=data_args.save_self_play_path,
+        )
 
     _prepare_splits_kwargs = {
         "data_args": data_args,
@@ -115,7 +128,7 @@ def load_dataset(
         "data_training_args": data_training_args,
     }
 
-    if data_args.dataset == "spider":
+    if dataset_to_load == "spider":
         metric = _spider_metric()
         dataset_splits = prepare_splits(
             dataset_dict=_spider_dataset_dict(),
@@ -123,9 +136,7 @@ def load_dataset(
             pre_process_function=_spider_pre_process_function,
             **_prepare_splits_kwargs,
         )
-
-
-    elif data_args.dataset == "cosql":
+    elif dataset_to_load == "cosql":
         metric = _cosql_metric()
         dataset_splits = prepare_splits(
             dataset_dict=_cosql_dataset_dict(),
@@ -133,8 +144,7 @@ def load_dataset(
             pre_process_function=_cosql_pre_process_function,
             **_prepare_splits_kwargs,
         )
-        
-    elif data_args.dataset == "cosql+spider":
+    elif dataset_to_load == "cosql+spider":
         metric = _cosql_metric()
         cosql_dataset_splits = prepare_splits(
             dataset_dict=_cosql_dataset_dict(),
@@ -176,10 +186,7 @@ def load_dataset(
             test_splits=cosql_dataset_splits.test_splits,
             schemas=schemas,
         )
-
-
-
-    elif data_args.dataset == "sparc":
+    elif dataset_to_load == "sparc":
         metric = _sparc_metric()
         dataset_splits = prepare_splits(
             dataset_dict=_sparc_dataset_dict(),
@@ -187,22 +194,24 @@ def load_dataset(
             pre_process_function=_sparc_pre_process_function,
             **_prepare_splits_kwargs,
         )
-
-        # print(tokenizer.decode((dataset_splits.train_split.dataset[0])["input_ids"]))
-        # print("\n")
-        # print(tokenizer.decode((dataset_splits.train_split.dataset[1])["input_ids"]))
-        # print("\n")
-        # print(tokenizer.decode((dataset_splits.train_split.dataset[2])["input_ids"]))
-
+    elif dataset_to_load == 'self_play':
+        metric = None
+        dataset_splits = _prepare_train_split(
+            dataset=_self_play_dataset_dict()["train"],
+            data_training_args=data_training_args,
+            add_serialized_schema=_self_play_add_serialized_schema,
+            pre_process_function=_self_play_pre_process_function,
+        )
     else:
         raise NotImplementedError()
 
-    if dataset_splits.train_split is not None:
-        _log_duplicate_count(dataset=dataset_splits.train_split.dataset, dataset_name=data_args.dataset, split="train")
-    if dataset_splits.eval_split is not None:
-        _log_duplicate_count(dataset=dataset_splits.eval_split.dataset, dataset_name=data_args.dataset, split="eval")
-    if dataset_splits.test_splits is not None:
-        for section, split in dataset_splits.test_splits.items():
-            _log_duplicate_count(dataset=split.dataset, dataset_name=data_args.dataset, split=section)
+    if dataset_to_load != 'self_play':
+        if dataset_splits.train_split is not None:
+            _log_duplicate_count(dataset=dataset_splits.train_split.dataset, dataset_name=data_args.dataset, split="train")
+        if dataset_splits.eval_split is not None:
+            _log_duplicate_count(dataset=dataset_splits.eval_split.dataset, dataset_name=data_args.dataset, split="eval")
+        if dataset_splits.test_splits is not None:
+            for section, split in dataset_splits.test_splits.items():
+                _log_duplicate_count(dataset=split.dataset, dataset_name=data_args.dataset, split=section)
 
     return metric, dataset_splits

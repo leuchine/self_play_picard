@@ -31,7 +31,7 @@
     "val_max_time": 1200,
     "text2sql_model_path": "/train/checkpoint-174",
     "sql2text_path": "/train_sql2text/model_checkpoint",
-    "dataset_path": "/transformers_cache/downloads/extracted/9ec14a98361d26d8422934a5235adb2cdafe085e5c5a8a5469c86cc9a82cae2c/cosql_dataset/",
+    "save_self_play_path": "/transformers_cache/cosql_self_play_dataset/",
     "db_path": "/transformers_cache/downloads/extracted/9ec14a98361d26d8422934a5235adb2cdafe085e5c5a8a5469c86cc9a82cae2c/cosql_dataset/database",
     "table_path": "/transformers_cache/downloads/extracted/9ec14a98361d26d8422934a5235adb2cdafe085e5c5a8a5469c86cc9a82cae2c/cosql_dataset/tables.json",
     "sql2text_base_model": "t5-base",
