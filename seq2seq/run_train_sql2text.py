@@ -171,7 +171,7 @@ class Trainer:
         torch.save(self.model.module, os.path.join(path, "model_checkpoint"))
 
 def main(use_self_play):
-    _, model_args, data_args, _, training_args, sql2text_args = parse_args()
+    _, model_args, data_args, _, training_args, sql2text_args, _ = parse_args()
     preprocess_dataset()
     trainer = Trainer(model_args, data_args, training_args, sql2text_args, use_self_play)
     trainer.train()

@@ -132,11 +132,6 @@ class DataTrainingArguments:
 
 @dataclass
 class DataArguments:
-    save_self_play_path: str = field(
-        metadata={
-            "help": "Path for saving self-play data."
-        },
-    )
     dataset: str = field(
         metadata={"help": "The dataset to be used. Choose between ``spider``, ``cosql``, or ``cosql+spider``, or ``sparc``."},
     )
@@ -171,6 +166,12 @@ class DataArguments:
     test_sections : Optional[List[str]] = field(
         default=None,
         metadata={"help": "Sections from the data config to use for testing"}
+    )
+    save_self_play_path: str = field(
+        default=None,
+        metadata={
+            "help": "Path for saving self-play data."
+        },
     )
 
 

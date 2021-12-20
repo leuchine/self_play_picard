@@ -63,6 +63,10 @@ class Preprocessor:
                 turns = []
                 last_turn_idx = -1
                 for item in tqdm.tqdm(dataset):
+                    if 'turn_idx' not in item:
+                        item['turn_idx'] = 0
+                    if 'goal' not in item:
+                        item['goal'] = item['query']
                     if item['turn_idx'] == -1:
                         continue
                     goal, question, query, schema = item['goal'], item['question'], item['query'], item['serialized_schema']
@@ -81,7 +85,7 @@ class Preprocessor:
             sql2text_preproc.save()
 
 def preprocess_dataset():
-    picard_args, model_args, data_args, data_training_args, training_args, _ = parse_args()
+    picard_args, model_args, data_args, data_training_args, training_args, _, _ = parse_args()
     path = os.path.join(model_args.cache_dir, data_args.dataset + "_sql2text")
     if not os.path.exists(os.path.join(path, 'train.json')) or not os.path.exists(
             os.path.join(path, 'validation.json')
