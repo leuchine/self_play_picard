@@ -142,21 +142,40 @@ bash: pull-train-image
 
 .PHONY: train_cosql
 train_cosql: pull-train-image
-	mkdir -p -m 777 train
+	mkdir -p -m 777 train_cosql
 	mkdir -p -m 777 transformers_cache
 	mkdir -p -m 777 wandb
 	docker run \
 		--rm \
 		--runtime=nvidia \
-		-e NVIDIA_VISIBLE_DEVICES=5 \
+		-e NVIDIA_VISIBLE_DEVICES=0 \
 		--user 13011:13011 \
-		--mount type=bind,source=$(BASE_DIR)/train,target=/train \
+		--mount type=bind,source=$(BASE_DIR)/train_cosql,target=/train_cosql \
 		--mount type=bind,source=$(BASE_DIR)/transformers_cache,target=/transformers_cache \
 		--mount type=bind,source=$(BASE_DIR)/configs,target=/app/configs \
 		--mount type=bind,source=$(BASE_DIR)/wandb,target=/app/wandb \
 		--mount type=bind,source=$(BASE_DIR)/seq2seq,target=/app/seq2seq \
 		tscholak/$(TRAIN_IMAGE_NAME):$(GIT_HEAD_REF) \
 		/bin/bash -c "python seq2seq/run_train_text2sql.py configs/train_cosql.json"
+
+.PHONY: train_cosql_self_play
+train_cosql_self_play: pull-train-image
+	mkdir -p -m 777 train_cosql_self_play
+	mkdir -p -m 777 transformers_cache
+	mkdir -p -m 777 wandb
+	docker run \
+		--rm \
+		--runtime=nvidia \
+		-e NVIDIA_VISIBLE_DEVICES=0 \
+		--user 13011:13011 \
+		--mount type=bind,source=$(BASE_DIR)/train_cosql_self_play,target=/train_cosql_self_play \
+		--mount type=bind,source=$(BASE_DIR)/transformers_cache,target=/transformers_cache \
+		--mount type=bind,source=$(BASE_DIR)/configs,target=/app/configs \
+		--mount type=bind,source=$(BASE_DIR)/wandb,target=/app/wandb \
+		--mount type=bind,source=$(BASE_DIR)/seq2seq,target=/app/seq2seq \
+		tscholak/$(TRAIN_IMAGE_NAME):$(GIT_HEAD_REF) \
+		/bin/bash -c "python seq2seq/run_train_text2sql.py configs/train_cosql.json True"
+
 
 .PHONY: train_sparc
 train_sparc: pull-train-image
@@ -179,7 +198,7 @@ train_sparc: pull-train-image
 
 .PHONY: train_sql2text_cosql
 train_sql2text_cosql: pull-train-image
-	mkdir -p -m 777 train_sql2text
+	mkdir -p -m 777 train_sql2text_cosql
 	mkdir -p -m 777 transformers_cache
 	mkdir -p -m 777 wandb
 	docker run \
@@ -187,7 +206,7 @@ train_sql2text_cosql: pull-train-image
 		--runtime=nvidia \
 		-e NVIDIA_VISIBLE_DEVICES=5 \
 		--user 13011:13011 \
-		--mount type=bind,source=$(BASE_DIR)/train_sql2text,target=/train_sql2text \
+		--mount type=bind,source=$(BASE_DIR)/train_sql2text_cosql,target=/train_sql2text_cosql \
 		--mount type=bind,source=$(BASE_DIR)/transformers_cache,target=/transformers_cache \
 		--mount type=bind,source=$(BASE_DIR)/configs,target=/app/configs \
 		--mount type=bind,source=$(BASE_DIR)/wandb,target=/app/wandb \
@@ -215,14 +234,14 @@ eval: pull-eval-image
 
 .PHONY: eval_cosql
 eval_cosql: pull-eval-image
-	mkdir -p -m 777 eval
+	mkdir -p -m 777 eval_cosql
 	mkdir -p -m 777 transformers_cache
 	mkdir -p -m 777 wandb
 	docker run \
 		-it \
 		--rm \
 		--user 13011:13011 \
-		--mount type=bind,source=$(BASE_DIR)/eval,target=/eval \
+		--mount type=bind,source=$(BASE_DIR)/eval_cosql,target=/eval_cosql \
 		--mount type=bind,source=$(BASE_DIR)/transformers_cache,target=/transformers_cache \
 		--mount type=bind,source=$(BASE_DIR)/configs,target=/app/configs \
 		--mount type=bind,source=$(BASE_DIR)/wandb,target=/app/wandb \
@@ -242,8 +261,8 @@ self_play_cosql: pull-eval-image
 		-e NVIDIA_VISIBLE_DEVICES=0 \
 		--mount type=bind,source=$(BASE_DIR)/database,target=/database \
 		--mount type=bind,source=$(BASE_DIR)/gazp-main,target=/gazp-main \
-		--mount type=bind,source=$(BASE_DIR)/train,target=/train \
-		--mount type=bind,source=$(BASE_DIR)/train_sql2text,target=/train_sql2text \
+		--mount type=bind,source=$(BASE_DIR)/train_cosql,target=/train_cosql \
+		--mount type=bind,source=$(BASE_DIR)/train_sql2text_cosql,target=/train_sql2text_cosql \
 		--mount type=bind,source=$(BASE_DIR)/transformers_cache,target=/transformers_cache \
 		--mount type=bind,source=$(BASE_DIR)/configs,target=/app/configs \
 		--mount type=bind,source=$(BASE_DIR)/seq2seq,target=/app/seq2seq \

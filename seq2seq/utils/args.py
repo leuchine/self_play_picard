@@ -85,16 +85,20 @@ def parse_args():
     data_training_args: DataTrainingArguments
     training_args: Seq2SeqTrainingArguments
     sql2text_args: SQL2TextArguments
-    if len(sys.argv) == 2 and sys.argv[1].endswith(".json"):
+    if sys.argv[1].endswith(".json"):
         # If we pass only one argument to the script and it's the path to a json file,
         # let's parse it to get our arguments.
         picard_args, model_args, data_args, data_training_args, training_args, sql2text_args = parser.parse_json_file(
             json_file=os.path.abspath(sys.argv[1])
         )
+        if len(sys.argv) == 3:
+            use_self_play = sys.argv[2]
+        else:
+            use_self_play = False
     elif len(sys.argv) == 3 and sys.argv[1].startswith("--local_rank") and sys.argv[2].endswith(".json"):
         data = json.loads(Path(os.path.abspath(sys.argv[2])).read_text())
         data.update({"local_rank": int(sys.argv[1].split("=")[1])})
         picard_args, model_args, data_args, data_training_args, training_args, sql2text_args = parser.parse_dict(args=data)
     else:
         picard_args, model_args, data_args, data_training_args, training_args, sql2text_args = parser.parse_args_into_dataclasses()
-    return picard_args, model_args, data_args, data_training_args, training_args, sql2text_args
+    return picard_args, model_args, data_args, data_training_args, training_args, sql2text_args, use_self_play

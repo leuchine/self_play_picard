@@ -28,11 +28,12 @@ from seq2seq.utils.dataset_loader import load_dataset
 from seq2seq.utils.spider import SpiderTrainer
 from seq2seq.utils.cosql import CoSQLTrainer
 from seq2seq.utils.sparc import SparcTrainer
-import torch
+from copy import deepcopy
 
 def main() -> None:
-    picard_args, model_args, data_args, data_training_args, training_args, _ = parse_args()
-    
+    picard_args, model_args, data_args, data_training_args, training_args, _, use_self_play = parse_args()
+    if use_self_play:
+        training_args.output_dir = training_args.output_dir + "_self_play"
     # If model_name_or_path includes ??? instead of the number of steps, 
     # we load the latest checkpoint.
     if 'checkpoint-???' in model_args.model_name_or_path:
@@ -116,18 +117,16 @@ def main() -> None:
         tokenizer.add_tokens([AddedToken(" <="), AddedToken(" <")])
     print(data_args, model_args, data_training_args, training_args)
     # Load dataset
-    """
-    _, self_play_dataset_splits = load_dataset(
-        dataset_to_load="self_play",
-        data_args=data_args,
-        model_args=model_args,
-        data_training_args=data_training_args,
-        training_args=training_args,
-        tokenizer=tokenizer,
-    )
-    print(tokenizer.decode(self_play_dataset_splits.dataset[0]['input_ids']))
-    print(tokenizer.decode(self_play_dataset_splits.dataset[0]['labels']))
-    """
+    if use_self_play:
+        _, self_play_dataset_splits = load_dataset(
+            dataset_to_load="self_play",
+            data_args=data_args,
+            model_args=model_args,
+            data_training_args=data_training_args,
+            training_args=training_args,
+            tokenizer=tokenizer,
+        )
+
     metric, dataset_splits = load_dataset(
         dataset_to_load=data_args.dataset,
         data_args=data_args,
@@ -167,6 +166,26 @@ def main() -> None:
                 "label_smoothing is enabled but the `prepare_decoder_input_ids_from_labels` method is not defined for"
                 f"`{model.__class__.__name__}`. This will lead to loss being calculated twice and will take up more memory"
             )
+        if use_self_play:
+            self_play_training_args = deepcopy(training_args)
+            self_play_training_args.num_train_epochs = data_training_args.num_self_play_epochs
+            self_play_trainer_kwargs = {
+                "model": model,
+                "args": self_play_training_args,
+                "metric": metric,
+                "train_dataset": self_play_dataset_splits.dataset,
+                "eval_dataset": dataset_splits.eval_split.dataset if training_args.do_eval else None,
+                "eval_examples": dataset_splits.eval_split.examples if training_args.do_eval else None,
+                "tokenizer": tokenizer,
+                "data_collator": DataCollatorForSeq2Seq(
+                    tokenizer,
+                    model=model,
+                    label_pad_token_id=(-100 if data_training_args.ignore_pad_token_for_loss else tokenizer.pad_token_id),
+                    pad_to_multiple_of=8 if training_args.fp16 else None,
+                ),
+                "ignore_pad_token_for_loss": data_training_args.ignore_pad_token_for_loss,
+                "target_with_db_id": data_training_args.target_with_db_id,
+            }
         # Initialize Trainer inherits transformers.trainer_seq2seq.Seq2SeqTrainer
         trainer_kwargs = {
             "model": model,
@@ -186,14 +205,16 @@ def main() -> None:
             "target_with_db_id": data_training_args.target_with_db_id,
         }
         if data_args.dataset in ["spider"]:
-            trainer = SpiderTrainer(**trainer_kwargs)
+            trainer_cls = SpiderTrainer
         elif data_args.dataset in ["cosql", "cosql+spider"]:
-            trainer = CoSQLTrainer(**trainer_kwargs)
+            trainer_cls = CoSQLTrainer
         elif data_args.dataset in ["sparc"]:
-            trainer = SparcTrainer(**trainer_kwargs)
+            trainer_cls = SparcTrainer
         else:
             raise NotImplementedError()
-
+        if use_self_play:
+            self_play_trainer = trainer_cls(**self_play_trainer_kwargs)
+        trainer = trainer_cls(**trainer_kwargs)
         # Training
         if training_args.do_train:
             logger.info("*** Train ***")
@@ -205,7 +226,10 @@ def main() -> None:
             elif last_checkpoint is not None:
                 checkpoint = last_checkpoint
 
-            train_result = trainer.train(resume_from_checkpoint=checkpoint)
+            if use_self_play:
+                self_play_trainer.train()
+
+            train_result = trainer.train()
             trainer.save_model()  # Saves the tokenizer too for easy upload
 
             metrics = train_result.metrics

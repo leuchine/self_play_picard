@@ -64,7 +64,6 @@ def cosql_pre_process_function(
         cosql_get_input(utterances=utterances, serialized_schema=serialized_schema, prefix=prefix)
         for utterances, serialized_schema in zip(batch["utterances"], batch["serialized_schema"])
     ]
-    print("cosql input to encoder: ", inputs)
     model_inputs: dict = tokenizer(
         inputs,
         max_length=max_source_length,
@@ -82,7 +81,6 @@ def cosql_pre_process_function(
         )
         for db_id, query in zip(batch["db_id"], batch["query"])
     ]
-    print("cosql target to encoder: ", targets)
     # Setup the tokenizer for targets
     with tokenizer.as_target_tokenizer():
         labels = tokenizer(

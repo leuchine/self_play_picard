@@ -9,7 +9,7 @@
     "schema_serialization_with_db_content": true,
     "normalize_query": true,
     "target_with_db_id": true,
-    "output_dir": "/train_sql2text",
+    "output_dir": "/train_sql2text_cosql",
     "cache_dir": "/transformers_cache",
     "pretrain_file": "self_play_sql2text.jsonl",
     "per_device_train_batch_size": 2,

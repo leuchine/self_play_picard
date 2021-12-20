@@ -104,7 +104,6 @@ class Spider(datasets.GeneratorBasedBuilder):
                 name=datasets.Split.TRAIN,
                 gen_kwargs={
                     "data_filepaths": [
-                        downloaded_filepath + "/spider/train_spider.json",
                         downloaded_filepath + "/spider/train_others.json",
                     ]
                     if self.include_train_others

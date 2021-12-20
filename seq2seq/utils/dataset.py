@@ -29,6 +29,12 @@ class DataTrainingArguments:
             "than this will be truncated, sequences shorter will be padded."
         },
     )
+
+    num_self_play_epochs: int = field(
+        default=500,
+        metadata={"help": "Num of self play epochs."},
+    )
+
     max_target_length: Optional[int] = field(
         default=512,
         metadata={
