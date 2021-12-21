@@ -108,7 +108,7 @@ train: pull-train-image
 	mkdir -p -m 777 transformers_cache
 	mkdir -p -m 777 wandb
 	docker run \
-		-it \
+		-m8g \
 		--rm \
 		--runtime=nvidia \
 		-e NVIDIA_VISIBLE_DEVICES=5 \
@@ -121,14 +121,13 @@ train: pull-train-image
 		tscholak/$(TRAIN_IMAGE_NAME):$(GIT_HEAD_REF) \
 		/bin/bash -c "python seq2seq/run_train_text2sql.py configs/train.json"
 
-
 .PHONY: bash
 bash: pull-train-image
 	mkdir -p -m 777 transformers_cache
 	mkdir -p -m 777 wandb
 	mkdir -p -m 777 train
 	docker run \
-		-it \
+		-m8g \
 		--rm \
 		--user 13011:13011 \
 		--mount type=bind,source=$(BASE_DIR)/train,target=/train \
@@ -146,9 +145,10 @@ train_cosql: pull-train-image
 	mkdir -p -m 777 transformers_cache
 	mkdir -p -m 777 wandb
 	docker run \
+		-m8g \
 		--rm \
 		--runtime=nvidia \
-		-e NVIDIA_VISIBLE_DEVICES=0 \
+		-e NVIDIA_VISIBLE_DEVICES=1,2,3,4 \
 		--user 13011:13011 \
 		--mount type=bind,source=$(BASE_DIR)/train_cosql,target=/train_cosql \
 		--mount type=bind,source=$(BASE_DIR)/transformers_cache,target=/transformers_cache \
@@ -164,6 +164,7 @@ train_cosql_self_play: pull-train-image
 	mkdir -p -m 777 transformers_cache
 	mkdir -p -m 777 wandb
 	docker run \
+		-m8g \
 		--rm \
 		--runtime=nvidia \
 		-e NVIDIA_VISIBLE_DEVICES=0 \
@@ -183,6 +184,7 @@ train_sparc: pull-train-image
 	mkdir -p -m 777 transformers_cache
 	mkdir -p -m 777 wandb
 	docker run \
+		-m8g \
 		--rm \
 		--runtime=nvidia \
 		-e NVIDIA_VISIBLE_DEVICES=5 \
@@ -202,6 +204,7 @@ train_sql2text_cosql: pull-train-image
 	mkdir -p -m 777 transformers_cache
 	mkdir -p -m 777 wandb
 	docker run \
+		-m8g \
 		--rm \
 		--runtime=nvidia \
 		-e NVIDIA_VISIBLE_DEVICES=5 \
@@ -214,14 +217,13 @@ train_sql2text_cosql: pull-train-image
 		tscholak/$(TRAIN_IMAGE_NAME):$(GIT_HEAD_REF) \
 		/bin/bash -c "pip install sacrebleu;python seq2seq/run_train_sql2text.py configs/train_sql2text_cosql.json"
 
-
 .PHONY: eval
 eval: pull-eval-image
 	mkdir -p -m 777 eval
 	mkdir -p -m 777 transformers_cache
 	mkdir -p -m 777 wandb
 	docker run \
-		-it \
+        -m8g \
 		--rm \
 		--user 13011:13011 \
 		--mount type=bind,source=$(BASE_DIR)/eval,target=/eval \
@@ -238,7 +240,7 @@ eval_cosql: pull-eval-image
 	mkdir -p -m 777 transformers_cache
 	mkdir -p -m 777 wandb
 	docker run \
-		-it \
+        -m8g \
 		--rm \
 		--user 13011:13011 \
 		--mount type=bind,source=$(BASE_DIR)/eval_cosql,target=/eval_cosql \
@@ -253,7 +255,7 @@ self_play_cosql: pull-eval-image
 	mkdir -p -m 777 database
 	mkdir -p -m 777 transformers_cache
 	docker run \
-		-it \
+		-m8g \
 		--rm \
 		--user 13011:13011 \
 		-p 8000:8000 \
@@ -285,3 +287,5 @@ serve: pull-eval-image
 		--mount type=bind,source=$(BASE_DIR)/configs,target=/app/configs \
 		tscholak/$(EVAL_IMAGE_NAME):$(GIT_HEAD_REF) \
 		/bin/bash -c "python seq2seq/serve_seq2seq.py configs/serve.json"
+
+# pip install /app/seq2seq/portalocker-2.3.2-py2.py3-none-any.whl; pip install /app/seq2seq/colorama-0.4.4-py2.py3-none-any.whl; pip install /app/seq2seq/tabulate-0.8.9-py3-none-any.whl ;python3 -m pip install /app/seq2seq/sacrebleu-2.0.0-py3-none-any.whl;

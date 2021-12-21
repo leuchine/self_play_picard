@@ -98,7 +98,6 @@ class Trainer:
         self.train_with_data(self.train_loader, self.training_args.num_train_epochs, 'train')
 
     def train_with_data(self, data_loader, epochs, phase):
-        best_bleu = -1
         for epoch in range(1, epochs + 1):
             self.model.train()
             total_loss = 0
@@ -128,10 +127,8 @@ class Trainer:
 
             bleu = self.evaluate()
             print("Phase {} Epoch {}: BLEU score {}".format(phase, epoch, bleu))
-            if bleu > best_bleu:
-                print("Saving model")
-                best_bleu = bleu
-                self.save()
+            print("Saving model")
+            self.save(epoch)
 
     def evaluate(self):
         tokenizer = T5Tokenizer.from_pretrained(self.model_args.model_name_or_path,
@@ -164,11 +161,11 @@ class Trainer:
         bleu_score = sacrebleu.corpus_bleu(sys, [references])
         return bleu_score.score
 
-    def save(self):
+    def save(self, epoch):
         path = os.path.join(self.training_args.output_dir)
         if not os.path.exists(path):
             os.makedirs(path)
-        torch.save(self.model.module, os.path.join(path, "model_checkpoint"))
+        torch.save(self.model.module, os.path.join(path, "model_checkpoint_{}".format(epoch)))
 
 def main(use_self_play):
     _, model_args, data_args, _, training_args, sql2text_args, _ = parse_args()
