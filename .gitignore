@@ -149,3 +149,7 @@ transformers_cache/*
 wandb/*
 database/*
 train_sparc/*
+train_cosql/*
+
+# nohup
+out.out

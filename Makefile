@@ -187,7 +187,7 @@ train_sparc: pull-train-image
 		-m8g \
 		--rm \
 		--runtime=nvidia \
-		-e NVIDIA_VISIBLE_DEVICES=5 \
+		-e NVIDIA_VISIBLE_DEVICES=5,6 \
 		--user 13011:13011 \
 		--mount type=bind,source=$(BASE_DIR)/train_sparc,target=/train_sparc \
 		--mount type=bind,source=$(BASE_DIR)/transformers_cache,target=/transformers_cache \

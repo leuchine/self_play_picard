@@ -186,6 +186,7 @@ def load_dataset(
             test_splits=cosql_dataset_splits.test_splits,
             schemas=schemas,
         )
+
     elif dataset_to_load == "sparc":
         metric = _sparc_metric()
         dataset_splits = prepare_splits(
@@ -194,6 +195,50 @@ def load_dataset(
             pre_process_function=_sparc_pre_process_function,
             **_prepare_splits_kwargs,
         )
+
+    elif dataset_to_load == 'sparc+spider':
+        metric = _sparc_metric()
+        sparc_dataset_splits = prepare_splits(
+            dataset_dict=_sparc_dataset_dict(),
+            add_serialized_schema=_sparc_add_serialized_schema,
+            pre_process_function=_sparc_pre_process_function,
+            **_prepare_splits_kwargs,
+        )
+        spider_training_split = (
+            _prepare_train_split(
+                dataset=_spider_dataset_dict()["train"],
+                data_training_args=data_training_args,
+                add_serialized_schema=_spider_add_serialized_schema,
+                pre_process_function=_spider_pre_process_function,
+            )
+            if training_args.do_train
+            else None
+        )
+        if sparc_dataset_splits.train_split is None and spider_training_split is None:
+            train_split = None
+        elif sparc_dataset_splits.train_split is None:
+            train_split = spider_training_split
+        elif spider_training_split is None:
+            train_split = sparc_dataset_splits.train_split
+        else:
+            dataset: Dataset = concatenate_datasets(
+                dsets=[sparc_dataset_splits.train_split.dataset, spider_training_split.dataset]
+            )
+            train_split = TrainSplit(
+                dataset=dataset,
+                schemas={**spider_training_split.schemas, **sparc_dataset_splits.train_split.schemas},
+            )
+        schemas = {
+            **sparc_dataset_splits.schemas,
+            **(spider_training_split.schemas if spider_training_split is not None else {}),
+        }
+        dataset_splits = DatasetSplits(
+            train_split=train_split,
+            eval_split=sparc_dataset_splits.eval_split,
+            test_splits=sparc_dataset_splits.test_splits,
+            schemas=schemas,
+        )
+        
     elif dataset_to_load == 'self_play':
         metric = None
         dataset_splits = _prepare_train_split(

@@ -208,7 +208,7 @@ def main() -> None:
             trainer_cls = SpiderTrainer
         elif data_args.dataset in ["cosql", "cosql+spider"]:
             trainer_cls = CoSQLTrainer
-        elif data_args.dataset in ["sparc"]:
+        elif data_args.dataset in ["sparc", "sparc+spider"]:
             trainer_cls = SparcTrainer
         else:
             raise NotImplementedError()

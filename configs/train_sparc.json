@@ -1,7 +1,7 @@
 {
     "run_name": "t5-sparc",
     "model_name_or_path": "t5-base",
-    "dataset": "sparc",
+    "dataset": "sparc+spider",
     "source_prefix": "",
     "schema_serialization_type": "peteshaw",
     "schema_serialization_randomized": false,
@@ -14,9 +14,11 @@
     "do_train": true,
     "do_eval": true,
     "fp16": false,
+    "save_self_play_path": "/transformers_cache/sparc_self_play_dataset/",
+    "use_self_play": false,
     "num_train_epochs": 3072,
-    "per_device_train_batch_size": 5,
-    "per_device_eval_batch_size": 3,
+    "per_device_train_batch_size": 1,
+    "per_device_eval_batch_size": 1,
     "gradient_accumulation_steps": 410,
     "label_smoothing_factor": 0.0,
     "learning_rate": 1e-4,
@@ -41,5 +43,5 @@
     "num_beams": 1,
     "num_beam_groups": 1,
     "use_picard": false,
-    "overwrite_output_dir": false
+    "overwrite_output_dir": true
 }
