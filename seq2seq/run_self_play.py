@@ -60,7 +60,7 @@ def save_self_play_data(file_writer,
         file_writer.write(json.dumps(turn_data) + '\n')
         file_writer.flush()
 
-def filter(metrics, goal, infer_sql, self_play_args, threshold=0.9):
+def filter(metrics, goal, infer_sql, self_play_args, threshold=0.7):
     def create_reference(goal, self_play_args):
         schema = dump_db_json_schema(
             self_play_args.db_path + "/" + goal["db_id"] + "/" + goal["db_id"] + ".sqlite", goal["db_id"]
@@ -81,11 +81,17 @@ def filter(metrics, goal, infer_sql, self_play_args, threshold=0.9):
         return reference
 
     eval_result = metrics._compute([infer_sql], [create_reference(goal, self_play_args)])
-    count = 0
+    combined_acc, combined_acc_count = 0, 0
+    combined_rec, combined_rec_count = 0, 0
     for _, value in eval_result['partial'].items():
-        count += value['f1']
-    combined_f1 = float(count) / len(eval_result['partial'].items())
-    return combined_f1 >= threshold
+        combined_acc += value['acc']
+        combined_rec += value['rec']
+        combined_acc_count += value['acc_count']
+        combined_rec_count += value['rec_count']
+    combined_acc = float(combined_acc) / combined_acc_count
+    combined_rec = float(combined_rec) / combined_rec_count
+    return (eval_result['exact_match'] == 1.0 or eval_result['exec'] == 1.0) and combined_acc > threshold and combined_rec > threshold
+
 
 @dataclass
 class SelfPlayArguments:
@@ -243,7 +249,10 @@ class PretrainedText2SQL:
                                             db_id=db_id))
         output = outputs[0]
         query = output["generated_text"]
-        return replace_table_alias(query)
+        try:
+            return replace_table_alias(query)
+        except:
+            return query
 
 def run_self_play(data_args, self_play_args, text2sql_model, sql2text_model):
     goals = read_goals(self_play_args.goal_path)
