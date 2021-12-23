@@ -51,6 +51,9 @@ class SQL2TextArguments:
     pretrain_file: str = field(
         default='',
         metadata={"help": "self play filename."})
+    spider_epochs: int = field(
+        default=2,
+        metadata={"help": "Epochs for spider training."})
     weight_decay_value: float = field(
         default=0.0,
         metadata={"help": "Value for weight decay."})

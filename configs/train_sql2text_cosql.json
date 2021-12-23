@@ -1,7 +1,7 @@
 {
     "run_name": "t5-cosql-sql2text",
     "model_name_or_path": "mrm8488/t5-base-finetuned-wikiSQL-sql-to-en",
-    "dataset": "cosql+spider",
+    "dataset": "cosql",
     "source_prefix": "",
     "schema_serialization_type": "peteshaw",
     "schema_serialization_randomized": false,
@@ -16,6 +16,7 @@
     "per_device_eval_batch_size": 2,
     "weight_decay_value": 0,
     "learning_rate": 1e-4,
+    "spider_epochs": 1,
     "pretrain_epochs": 3,
     "num_train_epochs": 8,
     "max_source_seq_length": 896,

@@ -127,6 +127,7 @@ bash: pull-train-image
 	mkdir -p -m 777 wandb
 	mkdir -p -m 777 train
 	docker run \
+	    -it \
 		-m8g \
 		--rm \
 		--user 13011:13011 \
@@ -207,7 +208,7 @@ train_sql2text_cosql: pull-train-image
 		-m8g \
 		--rm \
 		--runtime=nvidia \
-		-e NVIDIA_VISIBLE_DEVICES=5 \
+		-e NVIDIA_VISIBLE_DEVICES=0 \
 		--user 13011:13011 \
 		--mount type=bind,source=$(BASE_DIR)/train_sql2text_cosql,target=/train_sql2text_cosql \
 		--mount type=bind,source=$(BASE_DIR)/transformers_cache,target=/transformers_cache \
@@ -260,7 +261,7 @@ self_play_cosql: pull-eval-image
 		--user 13011:13011 \
 		-p 8000:8000 \
 		--runtime=nvidia \
-		-e NVIDIA_VISIBLE_DEVICES=0 \
+		-e NVIDIA_VISIBLE_DEVICES=7 \
 		--mount type=bind,source=$(BASE_DIR)/database,target=/database \
 		--mount type=bind,source=$(BASE_DIR)/gazp-main,target=/gazp-main \
 		--mount type=bind,source=$(BASE_DIR)/train_cosql,target=/train_cosql \

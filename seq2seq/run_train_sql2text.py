@@ -55,8 +55,14 @@ class Trainer:
                 batch_size=training_args.per_device_train_batch_size * torch.cuda.device_count(),
                 shuffle=True
             )
+        spider_data = SQL2TextDataset(os.path.join(path, 'spider.json'))
         train_data = SQL2TextDataset(os.path.join(path, 'train.json'))
         val_data = SQL2TextDataset(os.path.join(path, 'validation.json'))
+        self.spider_loader = DataLoader(
+            spider_data,
+            batch_size=training_args.per_device_train_batch_size * torch.cuda.device_count(),
+            shuffle=True
+        )
         self.train_loader = DataLoader(
             train_data,
             batch_size=training_args.per_device_train_batch_size * torch.cuda.device_count(),
@@ -93,6 +99,7 @@ class Trainer:
 
 
     def train(self):
+        self.train_with_data(self.spider_loader, self.sql2text_args.spider_epochs, 'spider')
         if self.use_self_play:
             self.train_with_data(self.pretrain_loader, self.sql2text_args.pretrain_epochs, 'pretrain')
         self.train_with_data(self.train_loader, self.training_args.num_train_epochs, 'train')

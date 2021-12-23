@@ -105,7 +105,7 @@ def preprocess_dataset():
             load_from_cache_file=not data_training_args.overwrite_cache,
         )
 
-        if data_args.dataset == "cosql+spider":
+        if data_args.dataset == "cosql+spider" or data_args.dataset == "cosql":
             cosql_dataset_dict = datasets.load.load_dataset(
                 path=data_args.dataset_paths["cosql"], cache_dir=model_args.cache_dir
             )
@@ -125,11 +125,14 @@ def preprocess_dataset():
                 num_proc=data_training_args.preprocessing_num_workers,
                 load_from_cache_file=not data_training_args.overwrite_cache,
             )
-            train_dataset = [spider_train_dataset, cosql_train_dataset]
+            if data_args.dataset == "cosql+spider":
+                train_dataset = [spider_train_dataset, cosql_train_dataset]
+            elif data_args.dataset == "cosql":
+                train_dataset = [cosql_train_dataset]
             dev_dataset = [cosql_dev_dataset]
 
-        preprocessor = Preprocessor(['train', 'validation'],
-                                    [train_dataset, dev_dataset],
+        preprocessor = Preprocessor(['spider', 'train', 'validation'],
+                                    [[spider_train_dataset], train_dataset, dev_dataset],
                                     model_args,
                                     data_args)
         preprocessor.preprocess()
