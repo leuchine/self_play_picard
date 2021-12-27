@@ -60,7 +60,7 @@ def save_self_play_data(file_writer,
         file_writer.write(json.dumps(turn_data) + '\n')
         file_writer.flush()
 
-def filter(metrics, goal, infer_sql, self_play_args, threshold=0.7):
+def filter(metrics, goal, infer_sql, self_play_args, threshold=0.5):
     def create_reference(goal, self_play_args):
         schema = dump_db_json_schema(
             self_play_args.db_path + "/" + goal["db_id"] + "/" + goal["db_id"] + ".sqlite", goal["db_id"]
@@ -90,7 +90,7 @@ def filter(metrics, goal, infer_sql, self_play_args, threshold=0.7):
         combined_rec_count += value['rec_count']
     combined_acc = float(combined_acc) / combined_acc_count
     combined_rec = float(combined_rec) / combined_rec_count
-    return (eval_result['exact_match'] == 1.0 or eval_result['exec'] == 1.0) and combined_acc > threshold and combined_rec > threshold
+    return combined_acc > threshold and combined_rec > threshold # and (eval_result['exact_match'] == 1.0 or eval_result['exec'] == 1.0)
 
 
 @dataclass
@@ -145,7 +145,13 @@ class PretrainedSQL2Text:
         self.tokenizer.add_tokens(['<', '<s>'])
         self.schema_cache = {}
 
-    def generate(self, goal, previous_utterance, previous_sql, db_id):
+    def generate(self, goal, previous_utterance, previous_sql_with_alias, db_id):
+        previous_sql = []
+        for sql_with_alias in previous_sql_with_alias:
+            try:
+                previous_sql.append(replace_table_alias(sql_with_alias))
+            except:
+                previous_sql.append(sql_with_alias)
         previous_utterance = convert_utterances(previous_utterance)
         # get serialized schema
         if db_id not in self.schema_cache:
@@ -249,10 +255,7 @@ class PretrainedText2SQL:
                                             db_id=db_id))
         output = outputs[0]
         query = output["generated_text"]
-        try:
-            return replace_table_alias(query)
-        except:
-            return query
+        return query
 
 def run_self_play(data_args, self_play_args, text2sql_model, sql2text_model):
     goals = read_goals(self_play_args.goal_path)

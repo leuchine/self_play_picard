@@ -1,6 +1,6 @@
 {
     "run_name": "t5+picard-cosql-eval",
-    "model_name_or_path": "tscholak/2e826ioa",
+    "model_name_or_path": "/train_cosql/checkpoint-17280",
     "dataset": "cosql+spider",
     "source_prefix": "",
     "schema_serialization_type": "peteshaw",
@@ -16,7 +16,7 @@
     "fp16": false,
     "per_device_eval_batch_size": 1,
     "seed": 1,
-    "report_to": ["wandb"],
+    "report_to": [],
     "predict_with_generate": true,
     "num_beams": 4,
     "num_beam_groups": 1,

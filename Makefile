@@ -244,10 +244,13 @@ eval_cosql: pull-eval-image
         -m8g \
 		--rm \
 		--user 13011:13011 \
+		-e NVIDIA_VISIBLE_DEVICES=7 \
+		--mount type=bind,source=$(BASE_DIR)/train_cosql,target=/train_cosql \
 		--mount type=bind,source=$(BASE_DIR)/eval_cosql,target=/eval_cosql \
 		--mount type=bind,source=$(BASE_DIR)/transformers_cache,target=/transformers_cache \
 		--mount type=bind,source=$(BASE_DIR)/configs,target=/app/configs \
 		--mount type=bind,source=$(BASE_DIR)/wandb,target=/app/wandb \
+		--mount type=bind,source=$(BASE_DIR)/seq2seq,target=/app/seq2seq \
 		tscholak/$(EVAL_IMAGE_NAME):$(GIT_HEAD_REF) \
 		/bin/bash -c "python seq2seq/run_train_text2sql.py configs/eval_cosql.json"
 
