@@ -19,7 +19,7 @@ import json
 from third_party.spider.preprocess.get_tables import dump_db_json_schema
 
 import datasets
-
+import glob
 
 logger = datasets.logging.get_logger(__name__)
 
@@ -102,48 +102,49 @@ class SelfPlayData(datasets.GeneratorBasedBuilder):
             datasets.SplitGenerator(
                 name=datasets.Split.TRAIN,
                 gen_kwargs={
-                    "data_filepath": self.save_self_play_path + "/self_play.jsonl",
+                    "data_filepath": self.save_self_play_path + "/self_play_*.jsonl",
                     "db_path": downloaded_filepath + "/{}/database".format(self.dataset),
                 },
             ),
         ]
 
-    def _generate_examples(self, data_filepath, db_path):
+    def _generate_examples(self, data_filepath_repx, db_path):
         """This function returns the examples in the raw (text) form."""
-        logger.info("generating examples from = %s", data_filepath)
-        idx = 0 # indexing each training instance
-        with open(data_filepath) as f:
-            for line in f:
-                turn_data = json.loads(line)
-                db_id = turn_data["db_id"]
-                if db_id not in self.schema_cache:
-                    self.schema_cache[db_id] = dump_db_json_schema(
-                        db_path + "/" + db_id + "/" + db_id + ".sqlite", db_id
-                    )
-                schema = self.schema_cache[db_id]
+        idx = 0  # indexing each training instance
+        for data_filepath in glob.glob(data_filepath_repx):
+            logger.info("generating examples from = %s", data_filepath)
+            with open(data_filepath) as f:
+                for line in f:
+                    turn_data = json.loads(line)
+                    db_id = turn_data["db_id"]
+                    if db_id not in self.schema_cache:
+                        self.schema_cache[db_id] = dump_db_json_schema(
+                            db_path + "/" + db_id + "/" + db_id + ".sqlite", db_id
+                        )
+                    schema = self.schema_cache[db_id]
 
-                db_info = {
-                    "db_id": db_id,
-                    "db_path": db_path,
-                    "db_table_names": schema["table_names_original"],
-                    "db_column_names": [
-                        {"table_id": table_id, "column_name": column_name}
-                        for table_id, column_name in schema["column_names_original"]
-                    ],
-                    "db_column_types": schema["column_types"],
-                    "db_primary_keys": [{"column_id": column_id} for column_id in schema["primary_keys"]],
-                    "db_foreign_keys": [
-                        {"column_id": column_id, "other_column_id": other_column_id}
-                        for column_id, other_column_id in schema["foreign_keys"]
-                    ],
-                }
+                    db_info = {
+                        "db_id": db_id,
+                        "db_path": db_path,
+                        "db_table_names": schema["table_names_original"],
+                        "db_column_names": [
+                            {"table_id": table_id, "column_name": column_name}
+                            for table_id, column_name in schema["column_names_original"]
+                        ],
+                        "db_column_types": schema["column_types"],
+                        "db_primary_keys": [{"column_id": column_id} for column_id in schema["primary_keys"]],
+                        "db_foreign_keys": [
+                            {"column_id": column_id, "other_column_id": other_column_id}
+                            for column_id, other_column_id in schema["foreign_keys"]
+                        ],
+                    }
 
-                yield idx, {
-                    "goal": turn_data["goal"],
-                    "utterances": turn_data["utterances"],
-                    "question": turn_data["question"],
-                    "query": turn_data["query"],
-                    "turn_idx": turn_data["turn_idx"],
-                    **db_info,
-                }
-                idx += 1
+                    yield idx, {
+                        "goal": turn_data["goal"],
+                        "utterances": turn_data["utterances"],
+                        "question": turn_data["question"],
+                        "query": turn_data["query"],
+                        "turn_idx": turn_data["turn_idx"],
+                        **db_info,
+                    }
+                    idx += 1

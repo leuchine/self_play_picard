@@ -254,15 +254,54 @@ eval_cosql: pull-eval-image
 		tscholak/$(EVAL_IMAGE_NAME):$(GIT_HEAD_REF) \
 		/bin/bash -c "python seq2seq/run_train_text2sql.py configs/eval_cosql.json"
 
-.PHONY: self_play_cosql
-self_play_cosql: pull-eval-image
+.PHONY: self_play_cosql_1
+self_play_cosql_1: pull-eval-image
 	mkdir -p -m 777 database
 	mkdir -p -m 777 transformers_cache
 	docker run \
 		-m8g \
 		--rm \
 		--user 13011:13011 \
-		-p 8000:8000 \
+		--runtime=nvidia \
+		-e NVIDIA_VISIBLE_DEVICES=4 \
+		--mount type=bind,source=$(BASE_DIR)/database,target=/database \
+		--mount type=bind,source=$(BASE_DIR)/gazp-main,target=/gazp-main \
+		--mount type=bind,source=$(BASE_DIR)/train_cosql,target=/train_cosql \
+		--mount type=bind,source=$(BASE_DIR)/train_sql2text_cosql,target=/train_sql2text_cosql \
+		--mount type=bind,source=$(BASE_DIR)/transformers_cache,target=/transformers_cache \
+		--mount type=bind,source=$(BASE_DIR)/configs,target=/app/configs \
+		--mount type=bind,source=$(BASE_DIR)/seq2seq,target=/app/seq2seq \
+		tscholak/$(EVAL_IMAGE_NAME):$(GIT_HEAD_REF) \
+		/bin/bash -c "python seq2seq/run_self_play.py configs/self_play_cosql.json 0 3"
+
+.PHONY: self_play_cosql_2
+self_play_cosql_2: pull-eval-image
+	mkdir -p -m 777 database
+	mkdir -p -m 777 transformers_cache
+	docker run \
+		-m8g \
+		--rm \
+		--user 13011:13011 \
+		--runtime=nvidia \
+		-e NVIDIA_VISIBLE_DEVICES=6 \
+		--mount type=bind,source=$(BASE_DIR)/database,target=/database \
+		--mount type=bind,source=$(BASE_DIR)/gazp-main,target=/gazp-main \
+		--mount type=bind,source=$(BASE_DIR)/train_cosql,target=/train_cosql \
+		--mount type=bind,source=$(BASE_DIR)/train_sql2text_cosql,target=/train_sql2text_cosql \
+		--mount type=bind,source=$(BASE_DIR)/transformers_cache,target=/transformers_cache \
+		--mount type=bind,source=$(BASE_DIR)/configs,target=/app/configs \
+		--mount type=bind,source=$(BASE_DIR)/seq2seq,target=/app/seq2seq \
+		tscholak/$(EVAL_IMAGE_NAME):$(GIT_HEAD_REF) \
+		/bin/bash -c "python seq2seq/run_self_play.py configs/self_play_cosql.json 1 3"
+
+.PHONY: self_play_cosql_3
+self_play_cosql_3: pull-eval-image
+	mkdir -p -m 777 database
+	mkdir -p -m 777 transformers_cache
+	docker run \
+		-m8g \
+		--rm \
+		--user 13011:13011 \
 		--runtime=nvidia \
 		-e NVIDIA_VISIBLE_DEVICES=7 \
 		--mount type=bind,source=$(BASE_DIR)/database,target=/database \
@@ -273,7 +312,7 @@ self_play_cosql: pull-eval-image
 		--mount type=bind,source=$(BASE_DIR)/configs,target=/app/configs \
 		--mount type=bind,source=$(BASE_DIR)/seq2seq,target=/app/seq2seq \
 		tscholak/$(EVAL_IMAGE_NAME):$(GIT_HEAD_REF) \
-		/bin/bash -c "python seq2seq/run_self_play.py configs/self_play_cosql.json"
+		/bin/bash -c "python seq2seq/run_self_play.py configs/self_play_cosql.json 2 3"
 
 .PHONY: serve
 serve: pull-eval-image

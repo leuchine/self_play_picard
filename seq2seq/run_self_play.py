@@ -39,9 +39,13 @@ def convert_utterances(utterances):
         new_utterances.extend(re.split("/|\|", u))
     return new_utterances
 
-def read_goals(path):
+def read_goals(path, worker_id, num_worker):
     goals = json.load(open(path))
-    return goals
+    assigned_goals = []
+    for idx, goal in enumerate(goals):
+        if idx % num_worker == worker_id:
+            assigned_goals.append(goal)
+    return assigned_goals
 
 def save_self_play_data(file_writer,
                         db_id,
@@ -257,8 +261,8 @@ class PretrainedText2SQL:
         query = output["generated_text"]
         return query
 
-def run_self_play(data_args, self_play_args, text2sql_model, sql2text_model):
-    goals = read_goals(self_play_args.goal_path)
+def run_self_play(data_args, self_play_args, text2sql_model, sql2text_model, worker_id, num_worker):
+    goals = read_goals(self_play_args.goal_path, worker_id, num_worker)
     if 'cosql' in data_args.dataset:
         metrics =  datasets.load.load_metric(path=data_args.metric_paths["cosql"],
                                              config_name=data_args.metric_config,
@@ -266,7 +270,7 @@ def run_self_play(data_args, self_play_args, text2sql_model, sql2text_model):
     keep_count = 0
     total_count = 0
     os.makedirs(data_args.save_self_play_path, exist_ok=True)
-    with open(os.path.join(data_args.save_self_play_path, "self_play.jsonl"), 'w') as file_writer:
+    with open(os.path.join(data_args.save_self_play_path, "self_play_{}.jsonl".format(worker_id)), 'w') as file_writer:
         for goal in goals:
             goal['sql'] = replace_table_alias(goal['sql'])
             try:  # ill-formatted SQL from GAZP.
@@ -313,16 +317,14 @@ def main():
     sql2text_args: SQL2TextArguments
     data_args: DataArguments
     data_training_args: DataTrainingArguments
-    if len(sys.argv) == 2 and sys.argv[1].endswith(".json"):
-        picard_args, self_play_args, model_args, sql2text_args, data_args, data_training_args = parser.parse_json_file(json_file=os.path.abspath(sys.argv[1]))
-    else:
-        picard_args, self_play_args, model_args, sql2text_args, data_args, data_training_args = parser.parse_args_into_dataclasses()
-
+    picard_args, self_play_args, model_args, sql2text_args, data_args, data_training_args = parser.parse_json_file(json_file=os.path.abspath(sys.argv[1]))
+    worker_id = int(sys.argv[2])
+    num_worker = int(sys.argv[3])
     # Create sql2text model before text2sql model. Otherwise, generate function will be overridden.
     sql2text_model = PretrainedSQL2Text(model_args, self_play_args, sql2text_args, data_args, data_training_args)
     with PicardLauncher() if picard_args.launch_picard else nullcontext(None):
         text2sql_model = PretrainedText2SQL(picard_args, self_play_args, model_args, data_training_args, data_args)
-        run_self_play(data_args, self_play_args, text2sql_model, sql2text_model)
+        run_self_play(data_args, self_play_args, text2sql_model, sql2text_model, worker_id, num_worker)
 
 if __name__ == "__main__":
     main()
