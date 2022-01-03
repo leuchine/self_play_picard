@@ -111,7 +111,7 @@ train: pull-train-image
 		-m8g \
 		--rm \
 		--runtime=nvidia \
-		-e NVIDIA_VISIBLE_DEVICES=5 \
+		-e NVIDIA_VISIBLE_DEVICES=5,6 \
 		--user 13011:13011 \
 		--mount type=bind,source=$(BASE_DIR)/train,target=/train \
 		--mount type=bind,source=$(BASE_DIR)/transformers_cache,target=/transformers_cache \
@@ -149,7 +149,7 @@ train_cosql: pull-train-image
 		-m8g \
 		--rm \
 		--runtime=nvidia \
-		-e NVIDIA_VISIBLE_DEVICES=1,2,3,4 \
+		-e NVIDIA_VISIBLE_DEVICES=3,4 \
 		--user 13011:13011 \
 		--mount type=bind,source=$(BASE_DIR)/train_cosql,target=/train_cosql \
 		--mount type=bind,source=$(BASE_DIR)/transformers_cache,target=/transformers_cache \
@@ -253,6 +253,27 @@ eval_cosql: pull-eval-image
 		--mount type=bind,source=$(BASE_DIR)/seq2seq,target=/app/seq2seq \
 		tscholak/$(EVAL_IMAGE_NAME):$(GIT_HEAD_REF) \
 		/bin/bash -c "python seq2seq/run_train_text2sql.py configs/eval_cosql.json"
+
+.PHONY: eval_sparc
+eval_sparc: pull-eval-image
+	mkdir -p -m 777 eval_sparc
+	mkdir -p -m 777 transformers_cache
+	mkdir -p -m 777 wandb
+	docker run \
+        -m8g \
+		--rm \
+		--user 13011:13011 \
+		-e NVIDIA_VISIBLE_DEVICES=7 \
+		--mount type=bind,source=$(BASE_DIR)/train_sparc,target=/train_sparc \
+		--mount type=bind,source=$(BASE_DIR)/eval_sparc,target=/eval_sparc \
+		--mount type=bind,source=$(BASE_DIR)/transformers_cache,target=/transformers_cache \
+		--mount type=bind,source=$(BASE_DIR)/configs,target=/app/configs \
+		--mount type=bind,source=$(BASE_DIR)/wandb,target=/app/wandb \
+		--mount type=bind,source=$(BASE_DIR)/seq2seq,target=/app/seq2seq \
+		tscholak/$(EVAL_IMAGE_NAME):$(GIT_HEAD_REF) \
+		/bin/bash -c "python seq2seq/run_train_text2sql.py configs/eval_sparc.json"
+
+
 
 .PHONY: self_play_cosql_1
 self_play_cosql_1: pull-eval-image
