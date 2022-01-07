@@ -246,6 +246,7 @@ eval_cosql: pull-eval-image
 		--user 13011:13011 \
 		-e NVIDIA_VISIBLE_DEVICES=7 \
 		--mount type=bind,source=$(BASE_DIR)/train_cosql,target=/train_cosql \
+		--mount type=bind,source=$(BASE_DIR)/train_cosql_self_play,target=/train_cosql_self_play \
 		--mount type=bind,source=$(BASE_DIR)/eval_cosql,target=/eval_cosql \
 		--mount type=bind,source=$(BASE_DIR)/transformers_cache,target=/transformers_cache \
 		--mount type=bind,source=$(BASE_DIR)/configs,target=/app/configs \

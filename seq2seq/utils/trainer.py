@@ -103,7 +103,7 @@ class Seq2SeqTrainer(transformers.trainer_seq2seq.Seq2SeqTrainer):
         for key in list(output.metrics.keys()):
             if not key.startswith(f"{metric_key_prefix}_"):
                 output.metrics[f"{metric_key_prefix}_{key}"] = output.metrics.pop(key)
-
+        output.metrics['step'] = self.state.global_step
         self.log(output.metrics)
 
         self.control = self.callback_handler.on_evaluate(self.args, self.state, self.control, output.metrics)
@@ -166,7 +166,7 @@ class Seq2SeqTrainer(transformers.trainer_seq2seq.Seq2SeqTrainer):
         for key in list(output.metrics.keys()):
             if not key.startswith(f"{metric_key_prefix}_"):
                 output.metrics[f"{metric_key_prefix}_{key}"] = output.metrics.pop(key)
-
+        output.metrics['step'] = self.state.global_step
         self.log(output.metrics)
 
         self._memory_tracker.stop_and_update_metrics(output.metrics)
