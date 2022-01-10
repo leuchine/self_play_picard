@@ -102,7 +102,7 @@ class SelfPlayData(datasets.GeneratorBasedBuilder):
             datasets.SplitGenerator(
                 name=datasets.Split.TRAIN,
                 gen_kwargs={
-                    "data_filepath": self.save_self_play_path + "/self_play_*.jsonl",
+                    "data_filepath_repxh": self.save_self_play_path + "/self_play_*.jsonl",
                     "db_path": downloaded_filepath + "/{}/database".format(self.dataset),
                 },
             ),
