@@ -9,7 +9,7 @@
     "target_with_db_id": true,
     "db_path": "/database",
     "cache_dir": "/transformers_cache",
-    "num_beams": 4,
+    "num_beams": 2,
     "use_picard": true,
     "launch_picard": true,
     "picard_mode": "parse_with_guards",

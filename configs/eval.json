@@ -18,7 +18,7 @@
     "seed": 1,
     "report_to": ["wandb"],
     "predict_with_generate": true,
-    "num_beams": 4,
+    "num_beams": 2,
     "num_beam_groups": 1,
     "diversity_penalty": 0.0,
     "max_val_samples": 1034,
