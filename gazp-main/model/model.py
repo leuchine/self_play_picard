@@ -253,7 +253,7 @@ class Module(nn.Module):
             Reranker = utils.load_module(args.beam_rank)
             ext['reranker'] = Reranker(args, ext)
         m = Model(args, ext).place_on_device()
-        m.load_save(fname=fresume)
+        # m.load_save(fname=fresume)
         return m
 
     def run_pred(self, dev, args=None, verbose=True, desc='pred'):

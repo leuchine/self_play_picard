@@ -39,6 +39,7 @@ def main(args):
     args.db = os.path.abspath(args.db)
     print(args)
     gen_m = Module.load_inst(args.resume, overwrite=dict(tables=args.tables, db=args.db, dcache=args.dcache, beam_size=args.beam_size, batch=args.batch, fparser=args.fparser))
+
     fout = args.fout
     if args.beam_size:
         fout = fout.replace('.json', '.beam.json')
