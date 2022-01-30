@@ -87,7 +87,9 @@ def filter(metrics, goal, infer_sql, self_play_args, threshold=0.5):
     eval_result = metrics._compute([infer_sql], [create_reference(goal, self_play_args)])
     combined_acc, combined_acc_count = 0, 0
     combined_rec, combined_rec_count = 0, 0
+    #print("printing value in partial: ")
     for _, value in eval_result['partial'].items():
+        #print("value", value)
         combined_acc += value['acc']
         combined_rec += value['rec']
         combined_acc_count += value['acc_count']
@@ -263,20 +265,29 @@ class PretrainedText2SQL:
 
 def run_self_play(data_args, self_play_args, text2sql_model, sql2text_model, worker_id, num_worker):
     goals = read_goals(self_play_args.goal_path, worker_id, num_worker)
+    #print("goals: ", goals)
     if 'cosql' in data_args.dataset:
         metrics =  datasets.load.load_metric(path=data_args.metric_paths["cosql"],
                                              config_name=data_args.metric_config,
                                              test_suite_db_dir=data_args.test_suite_db_dir)
+
+    if 'sparc' in data_args.dataset:
+        metrics =  datasets.load.load_metric(path=data_args.metric_paths["sparc"],
+                                             config_name=data_args.metric_config,
+                                             test_suite_db_dir=data_args.test_suite_db_dir)
+
     keep_count = 0
     total_count = 0
     os.makedirs(data_args.save_self_play_path, exist_ok=True)
     with open(os.path.join(data_args.save_self_play_path, "self_play_{}.jsonl".format(worker_id)), 'w') as file_writer:
         for goal in goals:
+            #print("Try goal: ", goal)
             goal['sql'] = replace_table_alias(goal['sql'])
             try:  # ill-formatted SQL from GAZP.
                 parse_one_sql(goal['sql'], goal['db_id'], self_play_args.table_path)
             except:
                 continue
+            #print("parsed res: ", parse_one_sql(goal['sql'], goal['db_id'], self_play_args.table_path))
             previous_utterance, previous_sql = [], []
             eos = False
             count = 0

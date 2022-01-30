@@ -34,17 +34,18 @@ def main(args):
     assert args.resume
 
     AugModel = importlib.import_module('model.{}'.format(args.aug)).Module
+    #print("augmodel: ", AugModel) # ans2sql.Module
     args.ftrain = os.path.abspath(args.ftrain)
     args.tables = os.path.abspath(args.tables)
     args.db = os.path.abspath(args.db)
-    print(args)
+    #print(args) # resume is sql2nl
     gen_m = Module.load_inst(args.resume, overwrite=dict(tables=args.tables, db=args.db, dcache=args.dcache, beam_size=args.beam_size, batch=args.batch, fparser=args.fparser))
-
+    #print("gen_m: ", gen_m) # nl2sql
     fout = args.fout
+
     if args.beam_size:
         fout = fout.replace('.json', '.beam.json')
-    print('generating to {}'.format(fout))
-    gen_m.generate_sql(args.num_gen, AugModel, args.db_split, args=args)
+    gen_m.generate_sql(args.num_gen, AugModel, args.db_split, args=args) # calls from sql2nl_sparc.py
 
 
 if __name__ == '__main__':

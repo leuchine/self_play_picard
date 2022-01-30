@@ -192,7 +192,7 @@ class SQLDataset(Base):
 
         splits = {}
         for k in ['train', 'dev']:
-            with open(os.path.join(root, '{}.json'.format(k)), 'rb') as f:
+            with open(os.path.join(root, 'sql_state_tracking/cosql_{}.json'.format(k)), 'rb') as f:
                 splits[k] = []
                 for ex in json.load(f):
                     splits[k].append(ex)

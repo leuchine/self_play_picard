@@ -1,6 +1,6 @@
 {
     "run_name": "t5-cosql-sql2text",
-    "model_name_or_path": "t5-large",
+    "model_name_or_path": "t5-base",
     "dataset": "cosql",
     "source_prefix": "",
     "schema_serialization_type": "peteshaw",

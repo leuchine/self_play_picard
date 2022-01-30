@@ -199,6 +199,26 @@ train_sparc: pull-train-image
 		/bin/bash -c "python seq2seq/run_train_text2sql.py configs/train_sparc.json"
 
 
+.PHONY: train_sparc_self_play
+train_sparc_self_play: pull-train-image
+	mkdir -p -m 777 train_sparc_self_play
+	mkdir -p -m 777 transformers_cache
+	mkdir -p -m 777 wandb
+	docker run \
+		-m8g \
+		--rm \
+		--runtime=nvidia \
+		-e NVIDIA_VISIBLE_DEVICES=1 \
+		--user 13011:13011 \
+		--mount type=bind,source=$(BASE_DIR)/train_sparc_self_play,target=/train_sparc_self_play \
+		--mount type=bind,source=$(BASE_DIR)/transformers_cache,target=/transformers_cache \
+		--mount type=bind,source=$(BASE_DIR)/configs,target=/app/configs \
+		--mount type=bind,source=$(BASE_DIR)/wandb,target=/app/wandb \
+		--mount type=bind,source=$(BASE_DIR)/seq2seq,target=/app/seq2seq \
+		tscholak/$(TRAIN_IMAGE_NAME):$(GIT_HEAD_REF) \
+		/bin/bash -c "python seq2seq/run_train_text2sql.py configs/train_sparc.json True"
+
+
 .PHONY: train_sql2text_cosql
 train_sql2text_cosql: pull-train-image
 	mkdir -p -m 777 train_sql2text_cosql
@@ -208,7 +228,7 @@ train_sql2text_cosql: pull-train-image
 		-m8g \
 		--rm \
 		--runtime=nvidia \
-		-e NVIDIA_VISIBLE_DEVICES=0 \
+		-e NVIDIA_VISIBLE_DEVICES=1 \
 		--user 13011:13011 \
 		--mount type=bind,source=$(BASE_DIR)/train_sql2text_cosql,target=/train_sql2text_cosql \
 		--mount type=bind,source=$(BASE_DIR)/transformers_cache,target=/transformers_cache \
@@ -217,6 +237,26 @@ train_sql2text_cosql: pull-train-image
 		--mount type=bind,source=$(BASE_DIR)/seq2seq,target=/app/seq2seq \
 		tscholak/$(TRAIN_IMAGE_NAME):$(GIT_HEAD_REF) \
 		/bin/bash -c "pip install sacrebleu;python seq2seq/run_train_sql2text.py configs/train_sql2text_cosql.json"
+
+.PHONY: train_sql2text_sparc
+train_sql2text_sparc: pull-train-image
+	mkdir -p -m 777 train_sql2text_sparc
+	mkdir -p -m 777 transformers_cache
+	mkdir -p -m 777 wandb
+	docker run \
+		-m8g \
+		--rm \
+		--runtime=nvidia \
+		-e NVIDIA_VISIBLE_DEVICES=1 \
+		--user 13011:13011 \
+		--mount type=bind,source=$(BASE_DIR)/train_sql2text_sparc,target=/train_sql2text_sparc \
+		--mount type=bind,source=$(BASE_DIR)/transformers_cache,target=/transformers_cache \
+		--mount type=bind,source=$(BASE_DIR)/configs,target=/app/configs \
+		--mount type=bind,source=$(BASE_DIR)/wandb,target=/app/wandb \
+		--mount type=bind,source=$(BASE_DIR)/seq2seq,target=/app/seq2seq \
+		tscholak/$(TRAIN_IMAGE_NAME):$(GIT_HEAD_REF) \
+		/bin/bash -c "pip install sacrebleu;python seq2seq/run_train_sql2text.py configs/train_sql2text_sparc.json"
+
 
 .PHONY: eval
 eval: pull-eval-image
@@ -335,6 +375,28 @@ self_play_cosql_3: pull-eval-image
 		--mount type=bind,source=$(BASE_DIR)/seq2seq,target=/app/seq2seq \
 		tscholak/$(EVAL_IMAGE_NAME):$(GIT_HEAD_REF) \
 		/bin/bash -c "python seq2seq/run_self_play.py configs/self_play_cosql.json 2 3"
+
+
+.PHONY: self_play_sparc
+self_play_sparc: pull-eval-image
+	mkdir -p -m 777 database
+	mkdir -p -m 777 transformers_cache
+	docker run \
+		-m8g \
+		--rm \
+		--user 13011:13011 \
+		--runtime=nvidia \
+		-e NVIDIA_VISIBLE_DEVICES=1 \
+		--mount type=bind,source=$(BASE_DIR)/database,target=/database \
+		--mount type=bind,source=$(BASE_DIR)/gazp-main,target=/gazp-main \
+		--mount type=bind,source=$(BASE_DIR)/train_sparc,target=/train_sparc \
+		--mount type=bind,source=$(BASE_DIR)/train_sql2text_sparc,target=/train_sql2text_sparc \
+		--mount type=bind,source=$(BASE_DIR)/transformers_cache,target=/transformers_cache \
+		--mount type=bind,source=$(BASE_DIR)/configs,target=/app/configs \
+		--mount type=bind,source=$(BASE_DIR)/seq2seq,target=/app/seq2seq \
+		tscholak/$(EVAL_IMAGE_NAME):$(GIT_HEAD_REF) \
+		/bin/bash -c "python seq2seq/run_self_play.py configs/self_play_sparc.json 0 3"
+
 
 .PHONY: serve
 serve: pull-eval-image

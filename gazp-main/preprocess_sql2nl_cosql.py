@@ -155,12 +155,12 @@ class SQLDataset(Base):
 
     @classmethod
     def from_file(cls, root, dspider, dcache, debug=False):
-        train_database, dev_database = editsql_preprocess.read_db_split(dspider)
+        #train_database, dev_database = editsql_preprocess.read_db_split(dspider)
         conv = converter.Converter(os.path.join(dspider, 'tables.json'))
 
         splits = {}
         for k in ['train', 'dev']:
-            with open(os.path.join(root, '{}.json'.format(k)), 'rb') as f:
+            with open(os.path.join(root, 'sql_state_tracking/cosql_{}.json'.format(k)), 'rb') as f:
                 splits[k] = []
                 for ex in json.load(f):
                     splits[k].append(ex)
