@@ -98,12 +98,14 @@ class SelfPlayData(datasets.GeneratorBasedBuilder):
             _URL = "https://drive.google.com/uc?export=download&id=13Abvu5SUMSP3SJM-ZIj66mOkeyAquR73"
 
         downloaded_filepath = dl_manager.download_and_extract(_URL)
+        #print("downloaded file path: ",self.dataset.split("_")[0] )
         return [
             datasets.SplitGenerator(
                 name=datasets.Split.TRAIN,
                 gen_kwargs={
-                    "data_filepath_repxh": self.save_self_play_path + "/self_play_*.jsonl",
-                    "db_path": downloaded_filepath + "/{}/database".format(self.dataset),
+                    "data_filepath_repx": self.save_self_play_path + "/self_play_*.jsonl",
+                    "db_path": downloaded_filepath + "/{}/database".format(self.dataset.split("_")[0]),
+                    #"db_path": downloaded_filepath + "/{}/database".format(self.dataset),
                 },
             ),
         ]
