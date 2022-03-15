@@ -300,7 +300,7 @@ def run_self_play(data_args, self_play_args, text2sql_model, sql2text_model, wor
                     new_sql = text2sql_model.generate(previous_utterance, goal['db_id'])
                     previous_sql.append(new_sql)
                     count += 1
-            except (ValueError, TypeError, KeyError) as e:
+            except:
                 continue  # skip this dialogue for now.
             total_count += 1
             if filter(metrics, goal, previous_sql[-1], self_play_args):

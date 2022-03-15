@@ -91,7 +91,6 @@ class Preprocessor:
 def preprocess_dataset():
     picard_args, model_args, data_args, data_training_args, training_args, _, _ = parse_args()
     path = os.path.join(model_args.cache_dir, data_args.dataset + "_sql2text")
-    #print("dataset saved to: ", path)
 
     if not os.path.exists(os.path.join(path, 'train.json')) or not os.path.exists(
             os.path.join(path, 'validation.json')

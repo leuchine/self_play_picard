@@ -252,7 +252,7 @@ class Module(nn.Module):
         if args.model == 'nl2sql':
             Reranker = utils.load_module(args.beam_rank)
             ext['reranker'] = Reranker(args, ext)
-        m = Model(args, ext).place_on_device()
+        m = Model(args, ext)
         # m.load_save(fname=fresume)
         return m
 

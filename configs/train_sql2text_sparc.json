@@ -1,6 +1,6 @@
 {
     "run_name": "t5-sparc-sql2text",
-    "model_name_or_path": "t5-base",
+    "model_name_or_path": "t5-large",
     "dataset": "sparc",
     "source_prefix": "",
     "schema_serialization_type": "peteshaw",

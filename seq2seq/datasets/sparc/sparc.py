@@ -93,7 +93,6 @@ class Sparc(datasets.GeneratorBasedBuilder):
 
     def _split_generators(self, dl_manager):
         downloaded_filepath = dl_manager.download_and_extract(_URL)
-
         return [
             datasets.SplitGenerator(
                 name=datasets.Split.TRAIN,
