@@ -6,6 +6,8 @@ Qi Liu, Zihuiwen Ye, Tao Yu, Phil Blunsom and Linfeng Song. [Augmenting Multi-Tu
 ## About Self-Play for Text-to-SQL
 The task of context-dependent text-to-SQL aims to convert multi-turn user utterances to formal SQL queries. This is a challenging task due to both the scarcity of training data from which to learn complex contextual dependencies and to generalize to unseen databases. In this paper we explore augmenting the training datasets using self-play, which leverages contextual information to synthesize new interactions to adapt the model to new databases. We first design a SQL-to-text model conditioned on a sampled goal query, which represents a user’s intent, that then converses with a text-to-SQL semantic parser to generate new interactions. We then filter the synthesized interactions and retrain the models with the augmented data. We find that self-play improves the accuracy of a strong baseline on SParC and CoSQL, two widely used cross-domain text-to-SQL datasets. Our analysis shows that self-play simulates various conversational thematic relations,  enhances cross-domain generalization and improves beam-search.
 
+The implementation is based on [PICARD](https://github.com/ServiceNow/picard), which we use as our baseline Text-to-SQL model. 
+
 
 ### Training
 
