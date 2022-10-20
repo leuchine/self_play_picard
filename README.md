@@ -9,6 +9,20 @@ The task of context-dependent text-to-SQL aims to convert multi-turn user uttera
 The implementation is based on [PICARD](https://github.com/ServiceNow/picard), which we use as our baseline Text-to-SQL model. 
 
 
+### Installing Docker
+Training and evaluating are run using Docker. Following [PICARD](https://github.com/ServiceNow/picard), please first build the image for training:
+```
+$ make pull-train-image
+```
+And then build the image for evaluating:
+```
+$ make pull-eval-image
+```
+
+### Generating Goal Query Templates
+We use the method proposed in [GAZP](https://github.com/vzhong/gazp) to generate goal queries, which are later used for synthetic interaction generation. Please follow their Readme to prepocess the data and generate templates using the code under the section "Generate data". 
+
+
 ### Training
 
 The scripts for training text-to-SQL models on the datasets CoSQL and SParC are `launch_cosql.sh`, `launch_sparc.sh`, respectively. We take `launch_sparc.sh` as an example. 
@@ -33,7 +47,7 @@ This trains a SQL-to-text model on the specified dataset (SParC), saves the chec
 ```
 nohup  make self_play_sparc
 ```
-This generates synthetic self-play examples by first sampling goal guery templates proposed in [GAZP](https://github.com/vzhong/gazp), then using the trained text-to-SQL and SQL-to-text models to converse with each other.  <br /><br />      
+This generates synthetic self-play examples by using the sampled goal guery templates proposed in [GAZP](https://github.com/vzhong/gazp), then using the trained text-to-SQL and SQL-to-text models to converse with each other.  <br /><br />      
 
 ```
 nohup  make train_sparc_self_play
